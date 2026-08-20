@@ -1,0 +1,10 @@
+html[data-ghux-wrap="on"] .diff-table .blob-code,
+html[data-ghux-wrap="on"] .diff-table .blob-code-inner {
+  white-space: pre-wrap !important;
+  overflow-wrap: anywhere !important;
+  word-break: normal !important;
+}
+
+html[data-ghux-wrap="on"] .diff-table .blob-num {
+  vertical-align: top !important;
+}
