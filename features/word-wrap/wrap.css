@@ -1,10 +1,39 @@
-html[data-ghux-wrap="on"] .diff-table .blob-code,
-html[data-ghux-wrap="on"] .diff-table .blob-code-inner {
+/* React diff view (logged-in github.com PR files / commits) */
+html[data-ghux-wrap="on"] .diff-text-inner {
   white-space: pre-wrap !important;
-  overflow-wrap: anywhere !important;
+  overflow-wrap: break-word !important;
+}
+
+html[data-ghux-wrap="off"] .diff-text-inner {
+  white-space: pre !important;
+  overflow: visible !important;
+}
+
+html[data-ghux-wrap="off"] .diff-text {
+  white-space: pre !important;
+  overflow-wrap: normal !important;
   word-break: normal !important;
 }
 
-html[data-ghux-wrap="on"] .diff-table .blob-num {
-  vertical-align: top !important;
+html[data-ghux-wrap="off"] table:has(> tbody > tr.diff-line-row) {
+  table-layout: auto !important;
+}
+
+html[data-ghux-wrap="off"] div:has(> table > tbody > tr.diff-line-row) {
+  overflow-x: auto !important;
+}
+
+/* Classic diff view (server-rendered fallback, e.g. logged-out) */
+html[data-ghux-wrap="on"] .diff-table .blob-code,
+html[data-ghux-wrap="on"] .diff-table .blob-code-inner {
+  white-space: pre-wrap !important;
+  overflow-wrap: break-word !important;
+  word-break: normal !important;
+}
+
+html[data-ghux-wrap="off"] .diff-table .blob-code,
+html[data-ghux-wrap="off"] .diff-table .blob-code-inner {
+  white-space: pre !important;
+  overflow-wrap: normal !important;
+  word-break: normal !important;
 }

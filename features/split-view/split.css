@@ -1,0 +1,83 @@
+:root {
+  --ghux-split: 0.5;
+}
+
+html[data-ghux-split="on"] .ghux-diff-wrapper {
+  position: relative;
+}
+
+/* Split view + wrap off: keep both panes visible (fixed columns), scroll per line instead of the whole table */
+html[data-ghux-split="on"][data-ghux-wrap="off"] table:has(> tbody > tr > td.right-side-diff-cell) {
+  table-layout: fixed !important;
+}
+
+html[data-ghux-split="on"][data-ghux-wrap="off"] div:has(> table > tbody > tr > td.right-side-diff-cell) {
+  overflow-x: visible !important;
+}
+
+html[data-ghux-split="on"][data-ghux-wrap="off"] table:has(> tbody > tr > td.right-side-diff-cell) .diff-text-inner {
+  overflow-x: auto !important;
+  scrollbar-width: none !important;
+}
+
+/* Draggable divider on the split boundary; --ghux-numw = width of one line-number column */
+html[data-ghux-split="on"] .ghux-divider {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--ghux-numw, 50px) + (100% - var(--ghux-numw, 50px) * 2) * var(--ghux-split, 0.5));
+  width: 9px;
+  margin-left: -4px;
+  cursor: col-resize;
+  z-index: 20;
+  border-left: 1px solid transparent;
+}
+
+/* Don't overlay the scrollbar row when it's visible */
+html[data-ghux-split="on"][data-ghux-wrap="off"] .ghux-divider {
+  bottom: 16px;
+}
+
+html[data-ghux-split="on"] .ghux-divider:hover,
+html[data-ghux-split="on"] .ghux-divider.ghux-dragging {
+  border-left-color: var(--fgColor-accent, #4493f8);
+  background: color-mix(in srgb, var(--fgColor-accent, #4493f8) 15%, transparent);
+}
+
+/* Two horizontal scrollbars per file diff (Azure DevOps style), one per side.
+   Widths follow the split ratio via --ghux-leftw/--ghux-rightw (set in JS). */
+.ghux-hscroll-row {
+  display: none;
+}
+
+html[data-ghux-split="on"][data-ghux-wrap="off"] .ghux-hscroll-row {
+  display: flex;
+  border-top: 1px solid var(--borderColor-default, #30363d);
+}
+
+html[data-ghux-split="on"][data-ghux-wrap="off"] .ghux-hscroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  height: 16px;
+  min-width: 0;
+}
+
+html[data-ghux-split="on"][data-ghux-wrap="off"] .ghux-hscroll[data-side="left"] {
+  flex: 0 0 var(--ghux-leftw, 50%);
+}
+
+html[data-ghux-split="on"][data-ghux-wrap="off"] .ghux-hscroll[data-side="right"] {
+  flex: 0 0 var(--ghux-rightw, 50%);
+}
+
+.ghux-hscroll > div {
+  height: 1px;
+}
+
+/* Per-line range equalizer: invisible spacer so every line of a side gets the
+   same scroll range as the longest one -> the side scrolls as one block */
+html[data-ghux-split="on"][data-ghux-wrap="off"] td.diff-text-cell .diff-text-inner::after {
+  content: "";
+  display: inline-block;
+  width: var(--ghux-pad, 0px);
+}

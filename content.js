@@ -2,9 +2,17 @@ const FEATURES = [
   {
     id: 'word-wrap',
     storageKey: 'wordWrapEnabled',
-    defaultValue: true,
+    defaultValue: false,
     apply(on) {
       document.documentElement.dataset.ghuxWrap = on ? 'on' : 'off';
+    },
+  },
+  {
+    id: 'split-view',
+    storageKey: 'splitViewEnabled',
+    defaultValue: true,
+    apply(on) {
+      document.documentElement.dataset.ghuxSplit = on ? 'on' : 'off';
     },
   },
 ];

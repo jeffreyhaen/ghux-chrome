@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "GHUX - GitHub UX",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "GitHub review experience improvements: word wrap in diffs, with more features to come.",
   "permissions": ["storage"],
   "host_permissions": ["https://github.com/*"],
@@ -12,8 +12,8 @@
   "content_scripts": [
     {
       "matches": ["https://github.com/*"],
-      "css": ["features/word-wrap/wrap.css"],
-      "js": ["content.js"],
+      "css": ["features/word-wrap/wrap.css", "features/split-view/split.css"],
+      "js": ["content.js", "features/split-view/split.js"],
       "run_at": "document_start"
     }
   ]
