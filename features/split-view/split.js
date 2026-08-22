@@ -2,29 +2,18 @@
   const SPLIT_ATTR = 'data-ghux-split';
   const WRAP_ATTR = 'data-ghux-wrap';
   const RATIO_VAR = '--ghux-split';
-  const RATIO_KEY = 'splitRatio';
   const DONE_ATTR = 'data-ghux-split-done';
   const MIN_RATIO = 0.15;
   const MAX_RATIO = 0.85;
-
-  const hasStorage = typeof chrome !== 'undefined' && !!chrome.storage?.sync;
+  let defaultRatio = 0.5;
 
   const splitOn = () => document.documentElement.getAttribute(SPLIT_ATTR) === 'on';
   const wrapOff = () => document.documentElement.getAttribute(WRAP_ATTR) === 'off';
 
   const clamp = (v) => Math.min(MAX_RATIO, Math.max(MIN_RATIO, v));
 
-  function setRatio(v) {
-    document.documentElement.style.setProperty(RATIO_VAR, clamp(v));
-  }
-
-  function loadRatio() {
-    if (!hasStorage) return;
-    chrome.storage.sync.get({ [RATIO_KEY]: 0.5 }, (r) => setRatio(r[RATIO_KEY]));
-  }
-
-  function saveRatio(v) {
-    if (hasStorage) chrome.storage.sync.set({ [RATIO_KEY]: clamp(v) });
+  function setRatio(v, el = document.documentElement) {
+    el.style.setProperty(RATIO_VAR, clamp(v));
   }
 
   function scan(root = document) {
@@ -40,6 +29,7 @@
     if (!wrapper) return;
     table.setAttribute(DONE_ATTR, '1');
     wrapper.classList.add('ghux-diff-wrapper');
+    setRatio(defaultRatio, wrapper);
     ensureColumns(table);
     addScrollbars(table);
     addDivider(table, wrapper);
@@ -71,10 +61,8 @@
     layoutTable(table);
   }
 
-  function currentRatio() {
-    const v = parseFloat(
-      getComputedStyle(document.documentElement).getPropertyValue(RATIO_VAR)
-    );
+  function currentRatio(el = document.documentElement) {
+    const v = parseFloat(getComputedStyle(el).getPropertyValue(RATIO_VAR));
     return Number.isFinite(v) ? v : 0.5;
   }
 
@@ -94,15 +82,20 @@
     return w;
   }
 
+  const pendingLayout = new Set();
+
   function layoutTable(table) {
     const group = table.querySelector(':scope > colgroup.ghux-cols');
     const wrapper = table.parentElement;
     if (!group || !wrapper) return;
     const numW = numberColumnsWidth(table);
-    if (numW <= 0) return;
     const usable = wrapper.clientWidth - numW;
-    if (usable <= 0) return;
-    const ratio = currentRatio();
+    if (numW <= 0 || usable <= 0) {
+      pendingLayout.add(table);
+      return;
+    }
+    pendingLayout.delete(table);
+    const ratio = currentRatio(wrapper);
     const left = Math.round(usable * ratio);
     if (group.dataset.w === `${numW}:${left}`) return;
     group.dataset.w = `${numW}:${left}`;
@@ -125,19 +118,28 @@
     return table.querySelectorAll(`td.${side}-side-diff-cell .diff-text-inner`);
   }
 
-  function layoutAll() {
-    document.querySelectorAll(`table[${DONE_ATTR}]`).forEach((t) => {
+  function syncBars(table) {
+    SIDES.forEach((side) => {
+      const bar = sideBar(table.parentElement, side);
+      if (bar && bar.scrollLeft > 0) {
+        sideInners(table, side).forEach((i) => {
+          if (i.scrollLeft !== bar.scrollLeft) i.scrollLeft = bar.scrollLeft;
+        });
+      }
+    });
+  }
+
+  function layoutTables(tables) {
+    tables.forEach((t) => {
+      if (!t.isConnected) return;
       layoutTable(t);
       refreshSpacers(t);
-      SIDES.forEach((side) => {
-        const bar = sideBar(t.parentElement, side);
-        if (bar && bar.scrollLeft > 0) {
-          sideInners(t, side).forEach((i) => {
-            if (i.scrollLeft !== bar.scrollLeft) i.scrollLeft = bar.scrollLeft;
-          });
-        }
-      });
+      syncBars(t);
     });
+  }
+
+  function layoutAll() {
+    layoutTables(document.querySelectorAll(`table[${DONE_ATTR}]`));
   }
 
   function addScrollbars(table) {
@@ -203,30 +205,39 @@
       const usable = rect.width - numW;
       const ratioAt = (clientX) => (clientX - rect.left - numW / 2) / usable;
 
+      let frame = 0;
       const onMove = (ev) => {
-        setRatio(ratioAt(ev.clientX));
-        layoutAll();
+        setRatio(ratioAt(ev.clientX), wrapper);
+        if (frame) return;
+        frame = requestAnimationFrame(() => {
+          frame = 0;
+          if (table.isConnected) layoutTable(table);
+        });
       };
       const onUp = (ev) => {
         handle.classList.remove('ghux-dragging');
         document.removeEventListener('mousemove', onMove);
         document.removeEventListener('mouseup', onUp);
-        saveRatio(ratioAt(ev.clientX));
-        resetScrolls();
-        layoutAll();
+        if (frame) cancelAnimationFrame(frame);
+        const ratio = clamp(ratioAt(ev.clientX));
+        setRatio(ratio, wrapper);
+        defaultRatio = ratio;
+        resetScrolls(wrapper);
+        layoutTables([table]);
       };
       document.addEventListener('mousemove', onMove);
       document.addEventListener('mouseup', onUp);
     });
   }
 
-  function resetScrolls() {
-    document
+  function resetScrolls(scope = document) {
+    scope
       .querySelectorAll('.diff-text-inner, .ghux-hscroll')
       .forEach((i) => (i.scrollLeft = 0));
-    document
-      .querySelectorAll('.ghux-diff-wrapper')
-      .forEach((w) => (w.__ghuxLastV = 0));
+    (scope.classList?.contains('ghux-diff-wrapper')
+      ? [scope]
+      : scope.querySelectorAll('.ghux-diff-wrapper')
+    ).forEach((w) => (w.__ghuxLastV = 0));
   }
 
   // Scrolling one bar (or any line) scrolls BOTH sides, like Azure DevOps.
@@ -279,6 +290,7 @@
     });
     document.querySelectorAll('.ghux-diff-wrapper').forEach((n) => {
       n.classList.remove('ghux-diff-wrapper');
+      n.style.removeProperty(RATIO_VAR);
       n.style.removeProperty('--ghux-numw');
       n.style.removeProperty('--ghux-leftw');
       n.style.removeProperty('--ghux-rightw');
@@ -293,6 +305,7 @@
       i.__ghuxPad = 0;
       i.style.removeProperty('--ghux-pad');
     });
+    pendingLayout.clear();
     resetScrolls();
   }
 
@@ -333,7 +346,8 @@
     requestAnimationFrame(() => {
       scanScheduled = false;
       if (relevant) scan();
-      layoutAll();
+      layoutTables(pendingLayout);
+      layoutTables(dirtyTables);
       dirtyTables.clear();
     });
   });
@@ -362,6 +376,5 @@
 
   document.fonts?.ready.then(refreshAllSpacers);
 
-  loadRatio();
   scan();
 })();
