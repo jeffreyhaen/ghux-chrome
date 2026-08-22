@@ -25,7 +25,7 @@ Works in unified and split view on PR "Files changed", commit and compare pages.
 Enhances GitHub's split (side-by-side) diff view:
 
 - **Draggable divider** between the two panes; ratio persists in `chrome.storage.sync` (`splitRatio`), applied via the `--ghux-split` CSS var.
-- **Two horizontal scrollbars per file diff** (Azure DevOps style): one for the left pane, one for the right, each spanning its full half. Sides scroll independently; line-number columns stay put.
+- **Two horizontal scrollbars per file diff** (Azure DevOps style): one under each half. Scrolling either bar — or any code line directly, e.g. trackpad — scrolls **both sides together** (absolute sync, like ADO); the shorter side simply stops at its own end. Line-number columns stay put.
 - **Block scrolling**: every line of a side gets an invisible `::after` spacer (`--ghux-pad`) equalizing its scroll range to the longest line, so a side moves as one block instead of only the long lines. A per-side high-water mark keeps the range stable while GitHub virtualizes rows; ranges recompute on content mutations (e.g. async syntax highlighting) and resize.
 - Only active when word wrap is off (wrap on = GitHub's default wrapping, no horizontal scroll needed).
 

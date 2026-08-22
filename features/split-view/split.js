@@ -224,8 +224,16 @@
     document
       .querySelectorAll('.diff-text-inner, .ghux-hscroll')
       .forEach((i) => (i.scrollLeft = 0));
+    document
+      .querySelectorAll('.ghux-diff-wrapper')
+      .forEach((w) => (w.__ghuxLastV = 0));
   }
 
+  // Scrolling one bar (or any line) scrolls BOTH sides, like Azure DevOps.
+  // Echo filtering: our own broadcasts fire scroll events too; pure echoes
+  // (v === last) are ignored, and so are clamp echoes from the shorter side
+  // (an element reporting a value at its own max while last broadcast was
+  // higher) — otherwise the shorter side would yank the longer bar back.
   document.addEventListener(
     'scroll',
     (e) => {
@@ -237,23 +245,22 @@
       if (!isBar && !isInner) return;
       const wrapper = el.closest('.ghux-diff-wrapper');
       if (!wrapper) return;
-      let side;
-      if (isBar) {
-        side = el.dataset.side;
-      } else {
-        const td = el.closest('td');
-        if (td?.classList.contains('left-side-diff-cell')) side = 'left';
-        else if (td?.classList.contains('right-side-diff-cell')) side = 'right';
-        else return;
-      }
       const v = el.scrollLeft;
+      const last = wrapper.__ghuxLastV ?? -1;
+      if (v === last) return;
+      const elMax = el.scrollWidth - el.clientWidth;
+      if (v < last && elMax < last && v >= elMax - 1) return;
+      wrapper.__ghuxLastV = v;
       const table = wrapper.querySelector(`table[${DONE_ATTR}]`);
       if (!table) return;
-      sideInners(table, side).forEach((i) => {
-        if (i.scrollLeft !== v) i.scrollLeft = v;
+      table.querySelectorAll('.diff-text-inner').forEach((i) => {
+        if (i !== el && i.scrollLeft !== v) i.scrollLeft = v;
       });
-      const bar = sideBar(wrapper, side);
-      if (bar && bar.scrollLeft !== v) bar.scrollLeft = v;
+      wrapper
+        .querySelectorAll(':scope > .ghux-hscroll-row > .ghux-hscroll')
+        .forEach((bar) => {
+          if (bar !== el && bar.scrollLeft !== v) bar.scrollLeft = v;
+        });
     },
     true
   );
