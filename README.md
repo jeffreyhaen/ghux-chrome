@@ -1,4 +1,8 @@
-# GHUX - GitHub UX
+<p align="center">
+  <img src="icons/icon_full.png" alt="GHUX logo" width="180">
+</p>
+
+<h1 align="center">GHUX - GitHub UX</h1>
 
 Chrome extension that improves the GitHub code review experience.
 
