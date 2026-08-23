@@ -16,10 +16,12 @@
     el.style.setProperty(RATIO_VAR, clamp(v));
   }
 
+  const isClassicTable = (t) => t.classList.contains('diff-table');
+
   function scan(root = document) {
     if (!splitOn()) return;
     root
-      .querySelectorAll('table:has(> tbody > tr > td.right-side-diff-cell)')
+      .querySelectorAll('table:has(> tbody > tr > td.right-side-diff-cell), table.diff-table.file-diff-split')
       .forEach(enhance);
   }
 
@@ -68,7 +70,10 @@
 
   function codeRow(table) {
     return [...table.tBodies[0].children].find(
-      (r) => r.tagName === 'TR' && r.querySelector(':scope > td.diff-text-cell')
+      (r) =>
+        r.tagName === 'TR' &&
+        (r.querySelector(':scope > td.diff-text-cell') ||
+          (r.cells.length === 4 && r.cells[1].classList.contains('blob-code')))
     );
   }
 
@@ -115,6 +120,18 @@
   }
 
   function sideInners(table, side) {
+    if (isClassicTable(table)) {
+      // classic split tbody rows: [numL, codeL, numR, codeR]; empty sides lack .blob-code-inner
+      const idx = side === 'left' ? 1 : 3;
+      const out = [];
+      for (const r of table.tBodies[0]?.rows || []) {
+        if (r.cells.length === 4) {
+          const inner = r.cells[idx].querySelector('.blob-code-inner');
+          if (inner) out.push(inner);
+        }
+      }
+      return out;
+    }
     return table.querySelectorAll(`td.${side}-side-diff-cell .diff-text-inner`);
   }
 
@@ -232,7 +249,7 @@
 
   function resetScrolls(scope = document) {
     scope
-      .querySelectorAll('.diff-text-inner, .ghux-hscroll')
+      .querySelectorAll('.diff-text-inner, .blob-code-inner, .ghux-hscroll')
       .forEach((i) => (i.scrollLeft = 0));
     (scope.classList?.contains('ghux-diff-wrapper')
       ? [scope]
@@ -252,7 +269,7 @@
       const el = e.target;
       if (!(el instanceof Element)) return;
       const isBar = el.classList.contains('ghux-hscroll');
-      const isInner = el.classList.contains('diff-text-inner');
+      const isInner = el.classList.contains('diff-text-inner') || el.classList.contains('blob-code-inner');
       if (!isBar && !isInner) return;
       const wrapper = el.closest('.ghux-diff-wrapper');
       if (!wrapper) return;
@@ -264,7 +281,7 @@
       wrapper.__ghuxLastV = v;
       const table = wrapper.querySelector(`table[${DONE_ATTR}]`);
       if (!table) return;
-      table.querySelectorAll('.diff-text-inner').forEach((i) => {
+      table.querySelectorAll('.diff-text-inner, .blob-code-inner').forEach((i) => {
         if (i !== el && i.scrollLeft !== v) i.scrollLeft = v;
       });
       wrapper
@@ -301,7 +318,7 @@
       delete t.dataset.ghuxHwL;
       delete t.dataset.ghuxHwR;
     });
-    document.querySelectorAll('.diff-text-inner').forEach((i) => {
+    document.querySelectorAll('.diff-text-inner, .blob-code-inner').forEach((i) => {
       i.__ghuxPad = 0;
       i.style.removeProperty('--ghux-pad');
     });

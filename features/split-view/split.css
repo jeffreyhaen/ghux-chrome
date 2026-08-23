@@ -1,27 +1,50 @@
+/* Scoped to html[data-ghux-page="diff"] — see wrap.css. Split-view JS only
+   injects its markup when data-ghux-split="on", which content.js in turn only
+   sets on diff pages, so ghux-* classes below can never appear elsewhere. */
+
 :root {
   --ghux-split: 0.5;
 }
 
-html[data-ghux-split="on"] .ghux-diff-wrapper {
+html[data-ghux-page="diff"][data-ghux-split="on"] .ghux-diff-wrapper {
   position: relative;
 }
 
 /* Split view + wrap off: keep both panes visible (fixed columns), scroll per line instead of the whole table */
-html[data-ghux-split="on"][data-ghux-wrap="off"] table:has(> tbody > tr > td.right-side-diff-cell) {
+html[data-ghux-page="diff"][data-ghux-split="on"][data-ghux-wrap="off"] table:has(> tbody > tr > td.right-side-diff-cell) {
   table-layout: fixed !important;
 }
 
-html[data-ghux-split="on"][data-ghux-wrap="off"] div:has(> table > tbody > tr > td.right-side-diff-cell) {
+html[data-ghux-page="diff"][data-ghux-split="on"][data-ghux-wrap="off"] div:has(> table > tbody > tr > td.right-side-diff-cell) {
   overflow-x: visible !important;
 }
 
-html[data-ghux-split="on"][data-ghux-wrap="off"] table:has(> tbody > tr > td.right-side-diff-cell) .diff-text-inner {
+html[data-ghux-page="diff"][data-ghux-split="on"][data-ghux-wrap="off"] table:has(> tbody > tr > td.right-side-diff-cell) .diff-text-inner {
   overflow-x: auto !important;
   scrollbar-width: none !important;
 }
 
+/* Classic (server-rendered) split view, e.g. compare pages: same mechanics,
+   different markup. .blob-code-inner is a span with display: table-cell by
+   default — must become a block to be scrollable. */
+html[data-ghux-page="diff"][data-ghux-split="on"][data-ghux-wrap="off"] table.diff-table.file-diff-split {
+  table-layout: fixed !important;
+}
+
+html[data-ghux-page="diff"][data-ghux-split="on"][data-ghux-wrap="off"] div:has(> table.diff-table.file-diff-split) {
+  overflow-x: visible !important;
+}
+
+html[data-ghux-page="diff"][data-ghux-split="on"][data-ghux-wrap="off"] table.diff-table.file-diff-split td.blob-code > .blob-code-inner {
+  display: block !important;
+  white-space: pre !important;
+  overflow-x: auto !important;
+  overflow-wrap: normal !important;
+  scrollbar-width: none !important;
+}
+
 /* Draggable divider on the split boundary; --ghux-numw = width of one line-number column */
-html[data-ghux-split="on"] .ghux-divider {
+html[data-ghux-page="diff"][data-ghux-split="on"] .ghux-divider {
   position: absolute;
   top: 0;
   bottom: 0;
@@ -34,12 +57,12 @@ html[data-ghux-split="on"] .ghux-divider {
 }
 
 /* Don't overlay the scrollbar row when it's visible */
-html[data-ghux-split="on"][data-ghux-wrap="off"] .ghux-divider {
+html[data-ghux-page="diff"][data-ghux-split="on"][data-ghux-wrap="off"] .ghux-divider {
   bottom: 16px;
 }
 
-html[data-ghux-split="on"] .ghux-divider:hover,
-html[data-ghux-split="on"] .ghux-divider.ghux-dragging {
+html[data-ghux-page="diff"][data-ghux-split="on"] .ghux-divider:hover,
+html[data-ghux-page="diff"][data-ghux-split="on"] .ghux-divider.ghux-dragging {
   border-left-color: var(--fgColor-accent, #4493f8);
   background: color-mix(in srgb, var(--fgColor-accent, #4493f8) 15%, transparent);
 }
@@ -50,23 +73,23 @@ html[data-ghux-split="on"] .ghux-divider.ghux-dragging {
   display: none;
 }
 
-html[data-ghux-split="on"][data-ghux-wrap="off"] .ghux-hscroll-row {
+html[data-ghux-page="diff"][data-ghux-split="on"][data-ghux-wrap="off"] .ghux-hscroll-row {
   display: flex;
   border-top: 1px solid var(--borderColor-default, #30363d);
 }
 
-html[data-ghux-split="on"][data-ghux-wrap="off"] .ghux-hscroll {
+html[data-ghux-page="diff"][data-ghux-split="on"][data-ghux-wrap="off"] .ghux-hscroll {
   overflow-x: auto;
   overflow-y: hidden;
   height: 16px;
   min-width: 0;
 }
 
-html[data-ghux-split="on"][data-ghux-wrap="off"] .ghux-hscroll[data-side="left"] {
+html[data-ghux-page="diff"][data-ghux-split="on"][data-ghux-wrap="off"] .ghux-hscroll[data-side="left"] {
   flex: 0 0 var(--ghux-leftw, 50%);
 }
 
-html[data-ghux-split="on"][data-ghux-wrap="off"] .ghux-hscroll[data-side="right"] {
+html[data-ghux-page="diff"][data-ghux-split="on"][data-ghux-wrap="off"] .ghux-hscroll[data-side="right"] {
   flex: 0 0 var(--ghux-rightw, 50%);
 }
 
@@ -76,7 +99,8 @@ html[data-ghux-split="on"][data-ghux-wrap="off"] .ghux-hscroll[data-side="right"
 
 /* Per-line range equalizer: invisible spacer so every line of a side gets the
    same scroll range as the longest one -> the side scrolls as one block */
-html[data-ghux-split="on"][data-ghux-wrap="off"] td.diff-text-cell .diff-text-inner::after {
+html[data-ghux-page="diff"][data-ghux-split="on"][data-ghux-wrap="off"] td.diff-text-cell .diff-text-inner::after,
+html[data-ghux-page="diff"][data-ghux-split="on"][data-ghux-wrap="off"] table.diff-table.file-diff-split td.blob-code .blob-code-inner::after {
   content: "";
   display: inline-block;
   width: var(--ghux-pad, 0px);

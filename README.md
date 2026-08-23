@@ -18,7 +18,7 @@ GitHub's logged-in React diff view wraps long lines by default (`white-space: pr
 - **Off**: one code line = one visual line, matching the raw file. Forces `white-space: pre`, switches the diff table to `table-layout: auto` and gives the table wrapper a horizontal scrollbar.
 - **On**: GitHub-style wrapping, forced explicitly.
 
-Works in unified and split view on PR "Files changed", commit and compare pages. Line numbers stay aligned (number and code share a `<tr>`). Purely visual: copy/paste, suggestions and comment anchoring are unaffected.
+Works in unified and split view on PR "Files changed"/"Changes", commit and compare pages. Compare pages use GitHub's server-rendered classic markup (`table.diff-table`) — supported via a separate code path (see below). Line numbers stay aligned (number and code share a `<tr>`). Purely visual: copy/paste, suggestions and comment anchoring are unaffected.
 
 ### Split view (default: on)
 
@@ -29,9 +29,12 @@ Enhances GitHub's split (side-by-side) diff view:
 - **Block scrolling**: every line of a side gets an invisible `::after` spacer (`--ghux-pad`) equalizing its scroll range to the longest line, so a side moves as one block instead of only the long lines. A per-side high-water mark keeps the range stable while GitHub virtualizes rows; ranges recompute on content mutations (e.g. async syntax highlighting) and resize.
 - Only active when word wrap is off (wrap on = GitHub's default wrapping, no horizontal scroll needed).
 
-Verified live selectors (React view): `td.diff-text-cell`, `td.left-side-diff-cell` / `td.right-side-diff-cell`, `.diff-text`, `.diff-text-inner`, `tr.diff-line-row`. Classic view fallback selectors: `.diff-table .blob-code(-inner)`. Note: nested `:has()` is invalid CSS, so the wrapper scroll rule uses single-level `:has(> table > tbody > tr.diff-line-row)`.
+Verified live selectors (React view): `td.diff-text-cell`, `td.left-side-diff-cell` / `td.right-side-diff-cell`, `.diff-text`, `.diff-text-inner`, `tr.diff-line-row`. Note: nested `:has()` is invalid CSS, so the wrapper scroll rule uses single-level `:has(> table > tbody > tr.diff-line-row)`.
 
-- CSS is scoped under `html[data-ghux-wrap="on"|"off"]`, so the popup toggle works without a page reload
+Classic view (compare pages, logged-out): `table.diff-table`, split variant `table.diff-table.file-diff-split`, rows `[numL, codeL, numR, codeR]` (empty sides: `.blob-code-empty`, no inner), code span `.blob-code-inner` (a `span` with `display: table-cell` — GHUX makes it `display: block` to make it scrollable). The table has NO overflow container anywhere in its ancestor chain (GitHub wraps via its own `pre-wrap`), so wrap-off without a scroll mechanism stretches the whole page (measured live: 2179px vs 1745px viewport). Unified classic: wrapper gets `overflow-x: auto` + `table-layout: auto`. Split classic: per-line scrolling + ADO bars, same as React view. The first row is a `thead.sr-only` accessibility header (position: absolute) — never use it for measurements; `tBodies[0]` only.
+
+- CSS is scoped under `html[data-ghux-page="diff"][data-ghux-wrap="on"|"off"]`, so the popup toggle works without a page reload
+- **Page gating**: `content.js` sets `data-ghux-page="diff"` only on diff main pages (`/pull/<n>/files`, `/pull/<n>/changes` (GitHub's new PR diff experience — same React view, verified live), `/pull/<n>/commits/<sha>`, `/commit/<sha>`, `/compare/<range>`) and clears all `data-ghux-*` attributes elsewhere. Every CSS rule requires `data-ghux-page="diff"`, so embedded diffs on other pages — PR conversation comments, suggested changes — are never touched. Re-evaluated on Turbo navigations, `popstate` and `<title>` changes (React soft-nav catch-all).
 - Injected via manifest `content_scripts.css`, so GitHub's CSP never blocks it and it survives lazy-loaded diffs and Turbo navigations
 
 ## Architecture
@@ -43,12 +46,12 @@ features/word-wrap/    one folder per feature (css/js)
 popup/                 toolbar popup with toggles
 ```
 
-A feature is `{ id, storageKey, defaultValue, apply(on) }`. CSS-only features scope their rules under an `html[data-...]` attribute so toggling never needs reinjection.
+A feature is `{ id, storageKey, defaultValue, attr }`. CSS-only features scope their rules under `html[data-ghux-page="diff"]` plus their feature attribute, so toggling never needs reinjection.
 
 ## Notes / known risks
 
 - GitHub changes class names regularly. Selectors are centralized per feature for quick fixes.
-- The selectors were verified live (via Chrome DevTools Protocol) against the logged-in React diff view of a PR files page. Classic selectors cover the server-rendered fallback.
+- The selectors were verified live (via Chrome DevTools Protocol) against the logged-in React diff view of a PR files page, and the classic selectors against a compare page.
 - GitHub Enterprise: add your domain via `optional_host_permissions` later.
 
 ## Roadmap ideas

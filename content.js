@@ -3,24 +3,52 @@ const FEATURES = [
     id: 'word-wrap',
     storageKey: 'wordWrapEnabled',
     defaultValue: false,
-    apply(on) {
-      document.documentElement.dataset.ghuxWrap = on ? 'on' : 'off';
-    },
+    attr: 'ghuxWrap',
   },
   {
     id: 'split-view',
     storageKey: 'splitViewEnabled',
     defaultValue: true,
-    apply(on) {
-      document.documentElement.dataset.ghuxSplit = on ? 'on' : 'off';
-    },
+    attr: 'ghuxSplit',
   },
 ];
+
+// Only diff "main pages" get GHUX treatment. Embedded diffs elsewhere
+// (PR conversation comments, suggested changes, ...) stay untouched.
+// Note: GitHub's new PR diff experience uses /pull/<n>/changes instead of
+// /pull/<n>/files — same React diff view, both must match.
+const DIFF_PAGE_RE =
+  /^\/[^/]+\/[^/]+\/(?:pull\/\d+\/(?:files|changes|commits\/[0-9a-f]+)|commit\/[0-9a-f]+|compare\/\S)/i;
+
+const isDiffPage = () => DIFF_PAGE_RE.test(location.pathname);
+
+const state = {};
+
+function refresh() {
+  const root = document.documentElement;
+  const diff = isDiffPage();
+  if (diff) {
+    root.dataset.ghuxPage = 'diff';
+  } else {
+    delete root.dataset.ghuxPage;
+  }
+  for (const feature of FEATURES) {
+    const value = state[feature.storageKey];
+    if (!diff || value === undefined) {
+      delete root.dataset[feature.attr];
+    } else {
+      root.dataset[feature.attr] = value ? 'on' : 'off';
+    }
+  }
+}
 
 for (const feature of FEATURES) {
   chrome.storage.sync.get(
     { [feature.storageKey]: feature.defaultValue },
-    (result) => feature.apply(result[feature.storageKey])
+    (result) => {
+      state[feature.storageKey] = result[feature.storageKey];
+      refresh();
+    }
   );
 }
 
@@ -28,6 +56,28 @@ chrome.storage.onChanged.addListener((changes, area) => {
   if (area !== 'sync') return;
   for (const feature of FEATURES) {
     const change = changes[feature.storageKey];
-    if (change) feature.apply(change.newValue);
+    if (change) state[feature.storageKey] = change.newValue;
   }
+  refresh();
 });
+
+// GitHub is a SPA: re-evaluate on Turbo navigations, history nav, and
+// (as a catch-all for the React soft-nav router) on <title> changes.
+for (const eventName of ['turbo:load', 'turbo:render', 'popstate']) {
+  document.addEventListener(eventName, refresh);
+}
+
+function observeTitle() {
+  const title = document.querySelector('title');
+  if (title) {
+    new MutationObserver(refresh).observe(title, {
+      childList: true,
+      characterData: true,
+      subtree: true,
+    });
+  }
+}
+if (document.head) observeTitle();
+else document.addEventListener('DOMContentLoaded', observeTitle, { once: true });
+
+refresh();
