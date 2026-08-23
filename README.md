@@ -20,6 +20,10 @@ GitHub's logged-in React diff view wraps long lines by default (`white-space: pr
 
 Works in unified and split view on PR "Files changed"/"Changes", commit and compare pages. Compare pages use GitHub's server-rendered classic markup (`table.diff-table`) — supported via a separate code path (see below). Line numbers stay aligned (number and code share a `<tr>`). Purely visual: copy/paste, suggestions and comment anchoring are unaffected.
 
+### GHUX settings indicator + menu
+
+On diff pages, GHUX marks GitHub's view-options button with a `GHUX` badge and a `GitHub + GHUX settings` tooltip. Opening that menu also shows a **GHUX** section at the bottom with live toggles (word wrap, split view enhancements), cloned from GitHub's own menu items so styling matches. Works in the React diff view (ActionList menu) and the classic view (`details-menu` on compare pages). The same toggles remain available from the extension icon popup.
+
 ### Split view (default: on)
 
 Enhances GitHub's split (side-by-side) diff view:
@@ -43,6 +47,7 @@ Classic view (compare pages, logged-out): `table.diff-table`, split variant `tab
 manifest.json          MV3, host permission github.com only
 content.js             feature router: reads chrome.storage.sync, applies feature state
 features/word-wrap/    one folder per feature (css/js)
+features/settings-indicator/  marks GitHub's view-options button
 popup/                 toolbar popup with toggles
 ```
 

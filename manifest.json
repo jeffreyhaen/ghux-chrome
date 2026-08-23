@@ -24,8 +24,16 @@
   "content_scripts": [
     {
       "matches": ["https://github.com/*"],
-      "css": ["features/word-wrap/wrap.css", "features/split-view/split.css"],
-      "js": ["content.js", "features/split-view/split.js"],
+      "css": [
+        "features/word-wrap/wrap.css",
+        "features/split-view/split.css",
+        "features/settings-indicator/indicator.css"
+      ],
+      "js": [
+        "content.js",
+        "features/settings-indicator/indicator.js",
+        "features/split-view/split.js"
+      ],
       "run_at": "document_start"
     }
   ]
