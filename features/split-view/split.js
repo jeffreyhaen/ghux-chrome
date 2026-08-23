@@ -35,10 +35,12 @@
     ensureColumns(table);
     addScrollbars(table);
     addDivider(table, wrapper);
-    new ResizeObserver(() => {
+    const resizeObserver = new ResizeObserver(() => {
       layoutTable(table);
       refreshSpacers(table);
-    }).observe(table);
+    });
+    table.__ghuxResizeObserver = resizeObserver;
+    resizeObserver.observe(table);
   }
 
   function ensureColumns(table) {
@@ -313,6 +315,8 @@
       n.style.removeProperty('--ghux-rightw');
     });
     document.querySelectorAll(`table[${DONE_ATTR}]`).forEach((t) => {
+      t.__ghuxResizeObserver?.disconnect();
+      delete t.__ghuxResizeObserver;
       t.removeAttribute(DONE_ATTR);
       delete t.dataset.ghuxNumW;
       delete t.dataset.ghuxHwL;
@@ -325,6 +329,16 @@
     pendingLayout.clear();
     resetScrolls();
   }
+
+  document.addEventListener('ghux:navigation', () => {
+    teardown();
+    if (!splitOn()) return;
+    scan();
+    requestAnimationFrame(() => {
+      scan();
+      layoutAll();
+    });
+  });
 
   new MutationObserver(() => {
     if (splitOn()) {

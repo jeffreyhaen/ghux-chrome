@@ -34,7 +34,7 @@ Verified live selectors (React view): `td.diff-text-cell`, `td.left-side-diff-ce
 Classic view (compare pages, logged-out): `table.diff-table`, split variant `table.diff-table.file-diff-split`, rows `[numL, codeL, numR, codeR]` (empty sides: `.blob-code-empty`, no inner), code span `.blob-code-inner` (a `span` with `display: table-cell` — GHUX makes it `display: block` to make it scrollable). The table has NO overflow container anywhere in its ancestor chain (GitHub wraps via its own `pre-wrap`), so wrap-off without a scroll mechanism stretches the whole page (measured live: 2179px vs 1745px viewport). Unified classic: wrapper gets `overflow-x: auto` + `table-layout: auto`. Split classic: per-line scrolling + ADO bars, same as React view. The first row is a `thead.sr-only` accessibility header (position: absolute) — never use it for measurements; `tBodies[0]` only.
 
 - CSS is scoped under `html[data-ghux-page="diff"][data-ghux-wrap="on"|"off"]`, so the popup toggle works without a page reload
-- **Page gating**: `content.js` sets `data-ghux-page="diff"` only on diff main pages (`/pull/<n>/files`, `/pull/<n>/changes` (GitHub's new PR diff experience — same React view, verified live), `/pull/<n>/commits/<sha>`, `/commit/<sha>`, `/compare/<range>`) and clears all `data-ghux-*` attributes elsewhere. Every CSS rule requires `data-ghux-page="diff"`, so embedded diffs on other pages — PR conversation comments, suggested changes — are never touched. Re-evaluated on Turbo navigations, `popstate` and `<title>` changes (React soft-nav catch-all).
+- **Page gating**: `content.js` sets `data-ghux-page="diff"` only on diff main pages (`/pull/<n>/files`, `/pull/<n>/changes` (GitHub's new PR diff experience — same React view, verified live), `/pull/<n>/commits/<sha>`, `/commit/<sha>`, `/compare/<range>`) and clears all `data-ghux-*` attributes elsewhere. Every CSS rule requires `data-ghux-page="diff"`, so embedded diffs on other pages — PR conversation comments, suggested changes — are never touched. Re-evaluated on Turbo navigations, `popstate`, and URL changes from GitHub's React router.
 - Injected via manifest `content_scripts.css`, so GitHub's CSP never blocks it and it survives lazy-loaded diffs and Turbo navigations
 
 ## Architecture
@@ -61,3 +61,7 @@ A feature is `{ id, storageKey, defaultValue, attr }`. CSS-only features scope t
 - Collapse resolved review threads by default
 - "Mark all files viewed" / persist file filter
 - Jump-to-next-file hotkeys in PR files
+
+## License
+
+MIT

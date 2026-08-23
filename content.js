@@ -61,23 +61,25 @@ chrome.storage.onChanged.addListener((changes, area) => {
   refresh();
 });
 
-// GitHub is a SPA: re-evaluate on Turbo navigations, history nav, and
-// (as a catch-all for the React soft-nav router) on <title> changes.
-for (const eventName of ['turbo:load', 'turbo:render', 'popstate']) {
-  document.addEventListener(eventName, refresh);
+let lastRoute = `${location.pathname}${location.search}`;
+
+function routeKey() {
+  return `${location.pathname}${location.search}`;
 }
 
-function observeTitle() {
-  const title = document.querySelector('title');
-  if (title) {
-    new MutationObserver(refresh).observe(title, {
-      childList: true,
-      characterData: true,
-      subtree: true,
-    });
-  }
+function handleNavigation() {
+  const nextRoute = routeKey();
+  if (nextRoute === lastRoute) return;
+  lastRoute = nextRoute;
+  refresh();
+  document.dispatchEvent(new CustomEvent('ghux:navigation'));
 }
-if (document.head) observeTitle();
-else document.addEventListener('DOMContentLoaded', observeTitle, { once: true });
+
+for (const eventName of ['turbo:load', 'turbo:render', 'popstate']) {
+  document.addEventListener(eventName, handleNavigation);
+}
+window.addEventListener('hashchange', handleNavigation);
+
+window.setInterval(handleNavigation, 250);
 
 refresh();
