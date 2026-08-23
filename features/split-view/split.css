@@ -105,3 +105,10 @@ html[data-ghux-page="diff"][data-ghux-split="on"][data-ghux-wrap="off"] table.di
   display: inline-block;
   width: var(--ghux-pad, 0px);
 }
+
+/* Blank lines have nothing to scroll; the inline-block spacer would otherwise
+   create a line box that doubles the empty row's height. */
+html[data-ghux-page="diff"][data-ghux-split="on"][data-ghux-wrap="off"] td.diff-text-cell .diff-text-inner:empty::after,
+html[data-ghux-page="diff"][data-ghux-split="on"][data-ghux-wrap="off"] table.diff-table.file-diff-split td.blob-code .blob-code-inner:empty::after {
+  content: none;
+}
