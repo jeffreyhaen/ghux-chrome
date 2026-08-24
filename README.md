@@ -18,6 +18,10 @@ Chrome extension that improves the GitHub code review experience similar to Azur
 
 - **Quick review actions** — Azure DevOps style Approve split button in the Reviewers sidebar: approve, approve with a fixed comment, or request changes in one click (on by default)
 
+**Profile repositories tab** (`/<you>?tab=repositories`):
+
+- **Repo cleanup** — delete button (trash icon) next to the Star dropdown on each of your own repositories; asks you to type the repo name to confirm and deletes via the GitHub API (off by default, requires a token)
+
 All features can be toggled from the extension popup or GitHub's diff settings menu.
 
 ## Install
@@ -35,17 +39,20 @@ Some features can use the GitHub REST API instead of automating the GitHub
 interface, which makes them faster and more reliable. These features work
 without a token, but fall back to UI automation.
 
-Currently used by: **quick review actions**.
+Currently used by: **quick review actions** (optional) and **repo cleanup**
+(required — a repository can only be deleted through the API).
 
 Configure it once in the extension popup — all API-based features share the
 same token. The token is stored locally (`storage.local`), never synced.
 
 Which token to create:
 
-- **Fine-grained token** with *Pull requests: read/write* — scoped to a single
+- **Fine-grained token** with *Pull requests: read/write* (reviews) and
+  *Administration: read/write* (repository delete) — scoped to a single
   organization or set of repositories
-- **Classic token** with the `repo` scope — works across all organizations and
-  repositories you can access
+- **Classic token** with the `repo` scope (reviews) and `delete_repo` scope
+  (repository delete) — works across all organizations and repositories you
+  can access
 
 If your organization enforces SAML SSO, authorize the token afterwards via
 **Configure SSO** on the token page, otherwise the API returns `404 Not Found`.

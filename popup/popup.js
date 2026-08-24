@@ -3,6 +3,7 @@ const toggles = [
   { el: document.getElementById('splitView'), key: 'splitViewEnabled', defaultValue: true },
   { el: document.getElementById('diffMinimap'), key: 'diffMinimapEnabled', defaultValue: true },
   { el: document.getElementById('quickApprove'), key: 'quickApproveEnabled', defaultValue: true },
+  { el: document.getElementById('repoCleanup'), key: 'repoCleanupEnabled', defaultValue: false },
 ];
 
 const defaults = Object.fromEntries(toggles.map((t) => [t.key, t.defaultValue]));

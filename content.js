@@ -26,6 +26,14 @@ const FEATURES = [
     attr: 'ghuxApprove',
     page: 'pr',
   },
+  // Repo cleanup lives on the repositories tab of your own profile.
+  {
+    id: 'repo-cleanup',
+    storageKey: 'repoCleanupEnabled',
+    defaultValue: false,
+    attr: 'ghuxCleanup',
+    page: 'repos',
+  },
 ];
 
 // Only diff "main pages" get GHUX treatment. Embedded diffs elsewhere
@@ -43,21 +51,32 @@ const PR_PAGE_RE = /^\/[^/]+\/[^/]+\/pull\/\d+(?:\/|$)/i;
 
 const isPrPage = () => PR_PAGE_RE.test(location.pathname);
 
+// The repositories tab on a user profile: /<user>?tab=repositories
+const PROFILE_PAGE_RE = /^\/[^/]+\/?$/i;
+
+const isReposPage = () =>
+  PROFILE_PAGE_RE.test(location.pathname) &&
+  new URLSearchParams(location.search).get('tab') === 'repositories';
+
 const state = {};
 
 function refresh() {
   const root = document.documentElement;
   const diff = isDiffPage();
   const pr = !diff && isPrPage();
+  const repos = !diff && !pr && isReposPage();
   if (diff) {
     root.dataset.ghuxPage = 'diff';
   } else if (pr) {
     root.dataset.ghuxPage = 'pr';
+  } else if (repos) {
+    root.dataset.ghuxPage = 'repos';
   } else {
     delete root.dataset.ghuxPage;
   }
   for (const feature of FEATURES) {
-    const onPage = feature.page === 'pr' ? pr : diff;
+    const onPage =
+      feature.page === 'pr' ? pr : feature.page === 'repos' ? repos : diff;
     const value = state[feature.storageKey];
     if (!onPage || value === undefined) {
       delete root.dataset[feature.attr];

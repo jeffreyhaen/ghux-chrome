@@ -30,7 +30,8 @@
         "features/sticky-scrollbar/sticky.css",
         "features/settings-indicator/indicator.css",
         "features/diff-minimap/minimap.css",
-        "features/quick-approve/approve.css"
+        "features/quick-approve/approve.css",
+        "features/repo-cleanup/cleanup.css"
       ],
       "js": [
         "content.js",
@@ -38,7 +39,8 @@
         "features/split-view/split.js",
         "features/sticky-scrollbar/sticky.js",
         "features/diff-minimap/minimap.js",
-        "features/quick-approve/approve.js"
+        "features/quick-approve/approve.js",
+        "features/repo-cleanup/cleanup.js"
       ],
       "run_at": "document_start"
     }

@@ -81,6 +81,10 @@
     <input type="checkbox" id="quickApprove">
     Quick review actions on PR pages (approve / reject / …)
   </label>
+  <label>
+    <input type="checkbox" id="repoCleanup">
+    Delete-repository button on your repositories tab
+  </label>
 
   <h2>GitHub token (optional, for instant reviews)</h2>
   <div class="token-row">
@@ -90,7 +94,8 @@
   <div id="tokenStatus"></div>
   <div id="tokenStatus2" style="font-size:11px;color:#9198a1">
     <a href="https://github.com/settings/personal-access-tokens/new" target="_blank">Create a fine-grained token</a>
-    with “Pull requests: read/write”. Without a token, GHUX falls back to
+    with “Pull requests: read/write” (reviews) and “Administration: read/write”
+    (repository delete). Without a token, GHUX falls back to
     automating the review form.
   </div>
   <script src="popup.js"></script>
