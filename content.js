@@ -11,6 +11,12 @@ const FEATURES = [
     defaultValue: true,
     attr: 'ghuxSplit',
   },
+  {
+    id: 'diff-minimap',
+    storageKey: 'diffMinimapEnabled',
+    defaultValue: true,
+    attr: 'ghuxMinimap',
+  },
 ];
 
 // Only diff "main pages" get GHUX treatment. Embedded diffs elsewhere

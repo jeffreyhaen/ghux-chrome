@@ -28,13 +28,15 @@
         "features/word-wrap/wrap.css",
         "features/split-view/split.css",
         "features/sticky-scrollbar/sticky.css",
-        "features/settings-indicator/indicator.css"
+        "features/settings-indicator/indicator.css",
+        "features/diff-minimap/minimap.css"
       ],
       "js": [
         "content.js",
         "features/settings-indicator/indicator.js",
         "features/split-view/split.js",
-        "features/sticky-scrollbar/sticky.js"
+        "features/sticky-scrollbar/sticky.js",
+        "features/diff-minimap/minimap.js"
       ],
       "run_at": "document_start"
     }

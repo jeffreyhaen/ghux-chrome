@@ -1,0 +1,58 @@
+/* Per-file diff minimap: strip at a file's right edge with add/del markers
+   compressed over the whole file + viewport indicator. position:fixed on
+   <body> (like sticky.js) so it tracks the viewport natively — inside the
+   file container fixed positioning is unreliable on GitHub's diff view (see
+   sticky.css). Visibility is driven from minimap.js. */
+
+.ghux-mm {
+  display: none;
+  position: fixed;
+  z-index: 100;
+  width: 14px;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  border: 1px solid var(--borderColor-muted, #30363d);
+  border-radius: 3px;
+  background: var(--bgColor-muted, rgba(110, 118, 129, 0.1));
+}
+
+.ghux-mm.ghux-on {
+  display: block;
+}
+
+.ghux-mm-view {
+  position: absolute;
+  left: -1px;
+  right: -1px;
+  background: var(--bgColor-accent-muted, rgba(9, 105, 218, 0.1));
+  border-top: 1px solid var(--fgColor-accent, #0969da);
+  border-bottom: 1px solid var(--fgColor-accent, #0969da);
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.ghux-mm-mark {
+  position: absolute;
+  left: 1px;
+  right: 1px;
+  min-height: 3px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 1px;
+  cursor: pointer;
+}
+
+.ghux-mm-mark.add {
+  background: var(--fgColor-success, #1a7f37);
+}
+
+.ghux-mm-mark.del {
+  background: var(--fgColor-danger, #d1242f);
+}
+
+.ghux-mm-mark:hover {
+  outline: 1px solid var(--fgColor-default, #1f2328);
+  z-index: 1;
+}

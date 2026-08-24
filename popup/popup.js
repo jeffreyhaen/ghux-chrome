@@ -1,6 +1,7 @@
 const toggles = [
   { el: document.getElementById('wordWrap'), key: 'wordWrapEnabled', defaultValue: false },
   { el: document.getElementById('splitView'), key: 'splitViewEnabled', defaultValue: true },
+  { el: document.getElementById('diffMinimap'), key: 'diffMinimapEnabled', defaultValue: true },
 ];
 
 const defaults = Object.fromEntries(toggles.map((t) => [t.key, t.defaultValue]));

@@ -17,6 +17,7 @@
   const MENU_FEATURES = [
     { storageKey: 'wordWrapEnabled', defaultValue: false, label: 'Word wrap' },
     { storageKey: 'splitViewEnabled', defaultValue: true, label: 'Split view enhancements' },
+    { storageKey: 'diffMinimapEnabled', defaultValue: true, label: 'Diff minimap' },
   ];
 
   function isActive() {
