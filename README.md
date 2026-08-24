@@ -4,29 +4,21 @@
 
 <h1 align="center">GHUX - GitHub UX</h1>
 
-Chrome extension that improves the GitHub code review experience.
+Chrome extension that improves the GitHub code review experience similar to Azure DevOps.
 
 ## Features
 
-- Toggle word wrapping in diffs (off by default)
-- Enhance split-view diffs with a draggable divider, synchronized scrolling, and scrollbar bars that stay pinned to the viewport bottom while scrolling long files (on by default)
-- Diff minimap per file: a marker strip showing where additions/deletions are after using "Expand all lines"; click a marker to jump to it (on by default)
-- Quick review actions on pull request pages: an Azure DevOps style Approve split button in the Reviewers sidebar — approve, approve with a fixed comment, or request changes in one click (on by default)
-- Access settings from the extension popup or GitHub's diff settings menu
+**Diff pages** (pull requests, commits, compare):
 
-Works on GitHub pull request, commit, and compare diff pages.
+- **Word wrap** — toggle word wrapping in diffs (off by default)
+- **Split view enhancements** — draggable divider, synchronized scrolling, and scrollbar bars that stay pinned to the viewport bottom while scrolling long files (on by default)
+- **Diff minimap** — marker strip per file showing where additions/deletions are after using "Expand all lines"; click a marker to jump to it (on by default)
 
-## Quick review actions
+**Pull request pages**:
 
-The review buttons work out of the box by automating GitHub's own review form.
-For instant, navigation-free reviews you can configure a personal access token
-in the extension popup (stored locally, never synced):
+- **Quick review actions** — Azure DevOps style Approve split button in the Reviewers sidebar: approve, approve with a fixed comment, or request changes in one click (on by default)
 
-- Fine-grained token with **Pull requests: read/write** (per organization), or
-- Classic token with the **repo** scope (works across all organizations)
-
-If your organization enforces SAML SSO, authorize the token via **Configure SSO**.
-Without a token, GHUX falls back to form automation.
+All features can be toggled from the extension popup or GitHub's diff settings menu.
 
 ## Install
 
@@ -35,7 +27,28 @@ Without a token, GHUX falls back to form automation.
 3. Select **Load unpacked**
 4. Choose this repository
 
-Open a GitHub diff page and use the GHUX icon to configure the features.
+Open a GitHub page and use the GHUX icon to configure the features.
+
+## GitHub API token (optional)
+
+Some features can use the GitHub REST API instead of automating the GitHub
+interface, which makes them faster and more reliable. These features work
+without a token, but fall back to UI automation.
+
+Currently used by: **quick review actions**.
+
+Configure it once in the extension popup — all API-based features share the
+same token. The token is stored locally (`storage.local`), never synced.
+
+Which token to create:
+
+- **Fine-grained token** with *Pull requests: read/write* — scoped to a single
+  organization or set of repositories
+- **Classic token** with the `repo` scope — works across all organizations and
+  repositories you can access
+
+If your organization enforces SAML SSO, authorize the token afterwards via
+**Configure SSO** on the token page, otherwise the API returns `404 Not Found`.
 
 ## Development
 
