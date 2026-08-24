@@ -9,7 +9,7 @@ Chrome extension that improves the GitHub code review experience.
 ## Features
 
 - Toggle word wrapping in diffs (off by default)
-- Enhance split-view diffs with a draggable divider and synchronized scrolling (on by default)
+- Enhance split-view diffs with a draggable divider, synchronized scrolling, and scrollbar bars that stay pinned to the viewport bottom while scrolling long files (on by default)
 - Access settings from the extension popup or GitHub's diff settings menu
 
 Works on GitHub pull request, commit, and compare diff pages.

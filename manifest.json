@@ -27,12 +27,14 @@
       "css": [
         "features/word-wrap/wrap.css",
         "features/split-view/split.css",
+        "features/sticky-scrollbar/sticky.css",
         "features/settings-indicator/indicator.css"
       ],
       "js": [
         "content.js",
         "features/settings-indicator/indicator.js",
-        "features/split-view/split.js"
+        "features/split-view/split.js",
+        "features/sticky-scrollbar/sticky.js"
       ],
       "run_at": "document_start"
     }
