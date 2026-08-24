@@ -189,6 +189,8 @@
       const items = [];
       let max = parseFloat(table.dataset[hwKey] || '0');
       sideInners(table, side).forEach((i) => {
+        // blank inners (only a <br> or whitespace) get no spacer, see split.css
+        i.classList.toggle('ghux-blank', i.textContent.trim() === '');
         const extra = i.scrollWidth - i.clientWidth - (i.__ghuxPad || 0);
         items.push([i, extra]);
         if (extra > max) max = extra;
@@ -323,6 +325,7 @@
       delete t.dataset.ghuxHwR;
     });
     document.querySelectorAll('.diff-text-inner, .blob-code-inner').forEach((i) => {
+      i.classList.remove('ghux-blank');
       i.__ghuxPad = 0;
       i.style.removeProperty('--ghux-pad');
     });
