@@ -22,6 +22,10 @@ Chrome extension that improves the GitHub code review experience similar to Azur
 
 - **Repo cleanup** — delete button (trash icon) next to the Star dropdown on each of your own repositories; asks you to type the repo name to confirm and deletes via the GitHub API (off by default, requires a token)
 
+**Pull request list** (`/<owner>/<repo>/pulls`):
+
+- **PR dashboard** — replaces the native pull request list with an Azure DevOps board style table: Open/Draft state badges, checks status, creator avatars, open/resolved comment chips, reviewer avatars with status rings, branch flow (head → base), plus its own filter/search/sort toolbar and a ⇄ toggle back to the native list (on by default, requires a token)
+
 All features can be toggled from the extension popup or GitHub's diff settings menu.
 
 ## Install
@@ -39,8 +43,10 @@ Some features can use the GitHub REST API instead of automating the GitHub
 interface, which makes them faster and more reliable. These features work
 without a token, but fall back to UI automation.
 
-Currently used by: **quick review actions** (optional) and **repo cleanup**
-(required — a repository can only be deleted through the API).
+Currently used by: **quick review actions** (optional), **repo cleanup**
+(required — a repository can only be deleted through the API) and **PR
+dashboard** (required — reviewer statuses and resolved comment counts come
+from the GraphQL API).
 
 Configure it once in the extension popup — all API-based features share the
 same token. The token is stored locally (`storage.local`), never synced.

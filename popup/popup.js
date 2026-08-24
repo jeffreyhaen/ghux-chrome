@@ -4,6 +4,7 @@ const toggles = [
   { el: document.getElementById('diffMinimap'), key: 'diffMinimapEnabled', defaultValue: true },
   { el: document.getElementById('quickApprove'), key: 'quickApproveEnabled', defaultValue: true },
   { el: document.getElementById('repoCleanup'), key: 'repoCleanupEnabled', defaultValue: false },
+  { el: document.getElementById('prDashboard'), key: 'prDashboardEnabled', defaultValue: true },
 ];
 
 const defaults = Object.fromEntries(toggles.map((t) => [t.key, t.defaultValue]));

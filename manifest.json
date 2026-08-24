@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "GHUX - GitHub UX",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "GitHub review experience improvements: word wrap in diffs, with more features to come.",
   "permissions": ["storage"],
   "host_permissions": ["https://github.com/*", "https://api.github.com/*"],
@@ -31,7 +31,8 @@
         "features/settings-indicator/indicator.css",
         "features/diff-minimap/minimap.css",
         "features/quick-approve/approve.css",
-        "features/repo-cleanup/cleanup.css"
+        "features/repo-cleanup/cleanup.css",
+        "features/pr-dashboard/dashboard.css"
       ],
       "js": [
         "content.js",
@@ -40,7 +41,8 @@
         "features/sticky-scrollbar/sticky.js",
         "features/diff-minimap/minimap.js",
         "features/quick-approve/approve.js",
-        "features/repo-cleanup/cleanup.js"
+        "features/repo-cleanup/cleanup.js",
+        "features/pr-dashboard/dashboard.js"
       ],
       "run_at": "document_start"
     }

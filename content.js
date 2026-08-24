@@ -34,6 +34,14 @@ const FEATURES = [
     attr: 'ghuxCleanup',
     page: 'repos',
   },
+  // PR dashboard replaces the pull request list of a repository.
+  {
+    id: 'pr-dashboard',
+    storageKey: 'prDashboardEnabled',
+    defaultValue: true,
+    attr: 'ghuxPrDash',
+    page: 'pulls',
+  },
 ];
 
 // Only diff "main pages" get GHUX treatment. Embedded diffs elsewhere
@@ -58,6 +66,11 @@ const isReposPage = () =>
   PROFILE_PAGE_RE.test(location.pathname) &&
   new URLSearchParams(location.search).get('tab') === 'repositories';
 
+// The pull request list of a repository: /owner/repo/pulls
+const PULLS_PAGE_RE = /^\/[^/]+\/[^/]+\/pulls\/?$/i;
+
+const isPullsPage = () => PULLS_PAGE_RE.test(location.pathname);
+
 const state = {};
 
 function refresh() {
@@ -65,18 +78,27 @@ function refresh() {
   const diff = isDiffPage();
   const pr = !diff && isPrPage();
   const repos = !diff && !pr && isReposPage();
+  const pulls = !diff && !pr && !repos && isPullsPage();
   if (diff) {
     root.dataset.ghuxPage = 'diff';
   } else if (pr) {
     root.dataset.ghuxPage = 'pr';
   } else if (repos) {
     root.dataset.ghuxPage = 'repos';
+  } else if (pulls) {
+    root.dataset.ghuxPage = 'pulls';
   } else {
     delete root.dataset.ghuxPage;
   }
   for (const feature of FEATURES) {
     const onPage =
-      feature.page === 'pr' ? pr : feature.page === 'repos' ? repos : diff;
+      feature.page === 'pr'
+        ? pr
+        : feature.page === 'repos'
+        ? repos
+        : feature.page === 'pulls'
+        ? pulls
+        : diff;
     const value = state[feature.storageKey];
     if (!onPage || value === undefined) {
       delete root.dataset[feature.attr];
