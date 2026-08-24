@@ -1,0 +1,56 @@
+.ghux-review-split {
+  display: flex;
+  position: relative;
+}
+
+.ghux-review-split .ghux-review-main {
+  flex: 1;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.ghux-review-split .ghux-review-toggle {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  margin-left: -1px;
+  padding-right: 8px;
+  padding-left: 8px;
+}
+
+.ghux-review-split .ghux-review-menu {
+  position: relative;
+}
+
+.ghux-review-split .dropdown-menu {
+  right: 0;
+  left: auto;
+  width: auto;
+  min-width: 100%;
+}
+
+.ghux-review-split .dropdown-item {
+  white-space: nowrap;
+}
+
+.ghux-review-split .ghux-review-icon {
+  display: inline-block;
+  width: 16px;
+  margin-right: 6px;
+  text-align: center;
+}
+
+.ghux-review-split .ghux-fg-success {
+  color: var(--fgColor-success, #1f883d);
+}
+
+.ghux-review-split .ghux-fg-attention {
+  color: var(--fgColor-attention, #9a6700);
+}
+
+.ghux-review-split .ghux-fg-danger {
+  color: var(--fgColor-danger, #d1242f);
+}
+
+.ghux-review-split .octicon {
+  vertical-align: text-bottom;
+}

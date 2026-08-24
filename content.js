@@ -17,6 +17,15 @@ const FEATURES = [
     defaultValue: true,
     attr: 'ghuxMinimap',
   },
+  // Quick approve lives on the PR conversation page (Reviewers sidebar),
+  // not on diff pages.
+  {
+    id: 'quick-approve',
+    storageKey: 'quickApproveEnabled',
+    defaultValue: true,
+    attr: 'ghuxApprove',
+    page: 'pr',
+  },
 ];
 
 // Only diff "main pages" get GHUX treatment. Embedded diffs elsewhere
@@ -28,19 +37,29 @@ const DIFF_PAGE_RE =
 
 const isDiffPage = () => DIFF_PAGE_RE.test(location.pathname);
 
+// PR pages with the Reviewers sidebar (conversation, commits, checks).
+// Diff tabs are excluded: those are handled by DIFF_PAGE_RE above.
+const PR_PAGE_RE = /^\/[^/]+\/[^/]+\/pull\/\d+(?:\/|$)/i;
+
+const isPrPage = () => PR_PAGE_RE.test(location.pathname);
+
 const state = {};
 
 function refresh() {
   const root = document.documentElement;
   const diff = isDiffPage();
+  const pr = !diff && isPrPage();
   if (diff) {
     root.dataset.ghuxPage = 'diff';
+  } else if (pr) {
+    root.dataset.ghuxPage = 'pr';
   } else {
     delete root.dataset.ghuxPage;
   }
   for (const feature of FEATURES) {
+    const onPage = feature.page === 'pr' ? pr : diff;
     const value = state[feature.storageKey];
-    if (!diff || value === undefined) {
+    if (!onPage || value === undefined) {
       delete root.dataset[feature.attr];
     } else {
       root.dataset[feature.attr] = value ? 'on' : 'off';

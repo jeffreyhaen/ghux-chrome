@@ -6,7 +6,7 @@
     body {
       margin: 0;
       padding: 12px 16px;
-      min-width: 220px;
+      min-width: 240px;
       background: #0d1117;
       color: #e6edf3;
       font: 13px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -15,11 +15,51 @@
       margin: 0 0 8px;
       font-size: 14px;
     }
+    h2 {
+      margin: 12px 0 6px;
+      font-size: 12px;
+      color: #9198a1;
+      font-weight: 600;
+    }
     label {
       display: flex;
       align-items: center;
       gap: 8px;
       cursor: pointer;
+    }
+    .token-row {
+      display: flex;
+      gap: 6px;
+    }
+    .token-row input {
+      flex: 1;
+      min-width: 0;
+      background: #0d1117;
+      color: #e6edf3;
+      border: 1px solid #3d444d;
+      border-radius: 6px;
+      padding: 4px 8px;
+      font: inherit;
+    }
+    .token-row button {
+      background: #21262d;
+      color: #e6edf3;
+      border: 1px solid #3d444d;
+      border-radius: 6px;
+      padding: 4px 10px;
+      cursor: pointer;
+      font: inherit;
+    }
+    .token-row button:hover {
+      background: #30363d;
+    }
+    #tokenStatus {
+      margin-top: 4px;
+      font-size: 11px;
+      color: #9198a1;
+    }
+    a {
+      color: #4493f8;
     }
   </style>
 </head>
@@ -37,6 +77,22 @@
     <input type="checkbox" id="diffMinimap">
     Diff minimap: change markers per file
   </label>
+  <label>
+    <input type="checkbox" id="quickApprove">
+    Quick review actions on PR pages (approve / reject / …)
+  </label>
+
+  <h2>GitHub token (optional, for instant reviews)</h2>
+  <div class="token-row">
+    <input type="password" id="token" placeholder="github_pat_…" autocomplete="off">
+    <button id="saveToken" type="button">Save</button>
+  </div>
+  <div id="tokenStatus"></div>
+  <div id="tokenStatus2" style="font-size:11px;color:#9198a1">
+    <a href="https://github.com/settings/personal-access-tokens/new" target="_blank">Create a fine-grained token</a>
+    with “Pull requests: read/write”. Without a token, GHUX falls back to
+    automating the review form.
+  </div>
   <script src="popup.js"></script>
 </body>
 </html>

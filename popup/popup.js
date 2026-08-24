@@ -2,6 +2,7 @@ const toggles = [
   { el: document.getElementById('wordWrap'), key: 'wordWrapEnabled', defaultValue: false },
   { el: document.getElementById('splitView'), key: 'splitViewEnabled', defaultValue: true },
   { el: document.getElementById('diffMinimap'), key: 'diffMinimapEnabled', defaultValue: true },
+  { el: document.getElementById('quickApprove'), key: 'quickApproveEnabled', defaultValue: true },
 ];
 
 const defaults = Object.fromEntries(toggles.map((t) => [t.key, t.defaultValue]));
@@ -15,3 +16,24 @@ for (const t of toggles) {
     chrome.storage.sync.set({ [t.key]: t.el.checked });
   });
 }
+
+const tokenInput = document.getElementById('token');
+const tokenStatus = document.getElementById('tokenStatus');
+
+chrome.storage.local.get({ githubToken: '' }, (result) => {
+  if (result.githubToken) {
+    tokenInput.value = result.githubToken;
+    tokenStatus.textContent = 'Token saved — review actions use the GitHub API.';
+  } else {
+    tokenStatus.textContent = 'No token — review actions use form automation.';
+  }
+});
+
+document.getElementById('saveToken').addEventListener('click', () => {
+  const token = tokenInput.value.trim();
+  chrome.storage.local.set({ githubToken: token }, () => {
+    tokenStatus.textContent = token
+      ? 'Token saved — review actions use the GitHub API.'
+      : 'Token cleared — review actions use form automation.';
+  });
+});
