@@ -339,7 +339,6 @@
     }
     cells.push(reviewerCell);
 
-    for (const cell of cells) cell.dataset.prUrl = pr.url;
     return cells;
   }
 
@@ -352,22 +351,21 @@
     );
     const wrap = el('div', 'ghux-prdash-tablewrap');
     const table = el('div', 'ghux-prdash-table');
+    const header = el('div', 'ghux-prdash-header');
     for (const heading of ['State', 'Pull request', 'Checks', 'Creator', 'Comments', 'Reviewers']) {
-      table.append(el('div', 'ghux-prdash-th', heading));
+      header.append(el('div', 'ghux-prdash-th', heading));
     }
+    table.append(header);
     const visible = applyFilters(prs);
     if (!visible.length) {
       const empty = el('div', 'ghux-prdash-empty', 'No pull requests match the current filters.');
       table.append(empty);
     }
     for (const pr of visible) {
-      for (const cell of buildRow(pr)) table.append(cell);
+      const row = el('div', 'ghux-prdash-row');
+      row.append(...buildRow(pr));
+      table.append(row);
     }
-    table.addEventListener('click', (e) => {
-      if (e.target.closest('a, button, input, select')) return;
-      const cell = e.target.closest('[data-pr-url]');
-      if (cell) location.assign(cell.dataset.prUrl);
-    });
     wrap.append(table);
     frame.append(count, wrap);
     return frame;
