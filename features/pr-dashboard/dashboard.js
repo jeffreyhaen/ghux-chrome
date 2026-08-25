@@ -11,6 +11,7 @@
   let view = 'dash'; // 'dash' | 'native'
   let cache = null; // { key, fetchedAt, prs }
   let status = { kind: 'idle' }; // idle | loading | ready | no-token | error
+  let loadingKey = null;
   let dirty = true; // only rebuild DOM when state actually changed
   const filter = { state: 'active', search: '', sort: 'newest' };
 
@@ -55,10 +56,15 @@
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok || data.errors) {
-      const detail =
+      let detail =
         (data.errors && data.errors[0] && data.errors[0].message) ||
         data.message ||
         `${res.status}`;
+      const remaining = res.headers.get('x-ratelimit-remaining');
+      const reset = Number(res.headers.get('x-ratelimit-reset'));
+      if (remaining === '0' && reset) {
+        detail += ` Rate limit resets at ${new Date(reset * 1000).toLocaleTimeString()}.`;
+      }
       throw new Error(detail);
     }
     return [
@@ -373,6 +379,18 @@
     return notice;
   }
 
+  function buildErrorNotice(message) {
+    const notice = el('div', 'ghux-prdash-notice error');
+    notice.append(
+      el('span', '', `GHUX PR dashboard failed to load: ${message} The native GitHub list is shown below.`)
+    );
+    const retry = el('button', 'ghux-prdash-btn', '↻ Retry dashboard');
+    retry.type = 'button';
+    retry.addEventListener('click', () => loadData(true));
+    notice.append(retry);
+    return notice;
+  }
+
   function findNativeBlocks() {
     const list =
       document.querySelector('.js-navigation-container') ||
@@ -428,8 +446,10 @@
 
     if (status.kind === 'ready' && view === 'native') {
       root.replaceChildren(buildCollapsedBar());
-    } else {
+    } else if (status.kind === 'ready') {
       root.replaceChildren(buildToolbar());
+    } else {
+      root.replaceChildren();
     }
 
     if (status.kind === 'ready') {
@@ -446,7 +466,7 @@
           buildNotice('info', 'Add a GitHub token in the GHUX settings to enable the PR dashboard.')
         );
       } else if (status.kind === 'error') {
-        root.append(buildNotice('error', `GHUX PR dashboard failed to load: ${status.message}`));
+        root.append(buildErrorNotice(status.message));
       }
     }
   }
@@ -463,17 +483,21 @@
     const repo = repoFromPath();
     if (!repo) return;
     const key = `${repo.owner}/${repo.repo}`;
+    if (loadingKey === key) return;
+    if (!force && status.kind === 'error' && status.key === key) return;
     if (!force && cache && cache.key === key && Date.now() - cache.fetchedAt < CACHE_TTL) {
       status = { kind: 'ready' };
       if (dirty) render();
       return;
     }
-    status = { kind: 'loading' };
+    loadingKey = key;
+    status = { kind: 'loading', key };
     dirty = true;
     render();
     chrome.storage.local.get({ githubToken: '' }, async (cfg) => {
       dirty = true;
       if (!cfg.githubToken) {
+        loadingKey = null;
         status = { kind: 'no-token' };
         render();
         return;
@@ -483,8 +507,9 @@
         cache = { key, fetchedAt: Date.now(), prs };
         status = { kind: 'ready' };
       } catch (err) {
-        status = { kind: 'error', message: String((err && err.message) || err) };
+        status = { kind: 'error', key, message: String((err && err.message) || err) };
       }
+      loadingKey = null;
       render();
     });
   }
@@ -512,6 +537,7 @@
 
   new MutationObserver((mutations) => {
     for (const m of mutations) {
+      if (m.target.nodeType === 1 && m.target.closest?.(`#${ROOT_ID}`)) continue;
       const nodes = [...m.addedNodes, ...m.removedNodes];
       if (
         nodes.length &&

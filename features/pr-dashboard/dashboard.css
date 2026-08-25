@@ -304,9 +304,17 @@
 }
 
 .ghux-prdash-notice.error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   color: var(--fgColor-attention, #9a6700);
   background: var(--bgColor-attention-muted, #fff8c5);
   border-color: var(--borderColor-attention-muted, #d4a72c);
+}
+
+.ghux-prdash-notice.error .ghux-prdash-btn {
+  flex-shrink: 0;
 }
 
 html[data-ghux-prdash-view="dash"] [data-ghux-prdash-native] {
