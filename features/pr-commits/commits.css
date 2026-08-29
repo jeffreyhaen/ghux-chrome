@@ -1,0 +1,93 @@
+/* PR commit grouping. Only active on the pull request conversation page with
+   the feature enabled, so embedded diffs and other GitHub views stay native. */
+
+html[data-ghux-page='pr'][data-ghux-commits='on'] [data-ghux-commit='folded'] {
+  display: none !important;
+}
+
+.ghux-commits-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  margin: 8px 0 8px 22px;
+  padding: 6px 12px;
+  border: 1px solid var(--borderColor-default, #3d444d);
+  border-radius: 8px;
+  background: var(--bgColor-muted, #151b23);
+  color: var(--fgColor-default, #e6edf3);
+  font-size: 12.5px;
+  cursor: pointer;
+}
+
+.ghux-commits-group:hover {
+  border-color: var(--fgColor-muted, #9198a1);
+}
+
+.ghux-commits-group:focus-visible {
+  outline: 2px solid var(--focus-outlineColor, #1f6feb);
+  outline-offset: 2px;
+}
+
+.ghux-commits-badge,
+.ghux-commits-caret {
+  display: inline-flex;
+  align-items: center;
+  color: var(--fgColor-muted, #9198a1);
+  flex: none;
+}
+
+.ghux-commits-caret svg {
+  transition: transform 0.12s ease-in-out;
+}
+
+.ghux-commits-group.is-open .ghux-commits-caret svg {
+  transform: rotate(90deg);
+}
+
+.ghux-commits-avatars {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+}
+
+.ghux-commits-avatar {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1px solid var(--bgColor-default, #0d1117);
+  margin-right: -6px;
+}
+
+.ghux-commits-avatar:last-child {
+  margin-right: 0;
+}
+
+.ghux-commits-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-left: 4px;
+  margin-right: auto;
+}
+
+.ghux-commits-range {
+  flex: none;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+  color: var(--fgColor-muted, #9198a1);
+}
+
+.ghux-commits-hint {
+  flex: none;
+  font-size: 11px;
+  color: var(--fgColor-muted, #9198a1);
+  opacity: 0;
+  transition: opacity 0.12s ease-in-out;
+}
+
+.ghux-commits-group:hover .ghux-commits-hint,
+.ghux-commits-group:focus-visible .ghux-commits-hint {
+  opacity: 1;
+}

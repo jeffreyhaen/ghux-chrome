@@ -42,6 +42,14 @@ const FEATURES = [
     attr: 'ghuxPrDash',
     page: 'pulls',
   },
+  // Commit grouping lives on the PR conversation timeline.
+  {
+    id: 'pr-commits',
+    storageKey: 'prCommitsEnabled',
+    defaultValue: true,
+    attr: 'ghuxCommits',
+    page: 'pr',
+  },
 ];
 
 // Only diff "main pages" get GHUX treatment. Embedded diffs elsewhere

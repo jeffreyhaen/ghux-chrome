@@ -3,6 +3,7 @@ const toggles = [
   { el: document.getElementById('splitView'), key: 'splitViewEnabled', defaultValue: true },
   { el: document.getElementById('diffMinimap'), key: 'diffMinimapEnabled', defaultValue: true },
   { el: document.getElementById('quickApprove'), key: 'quickApproveEnabled', defaultValue: true },
+  { el: document.getElementById('prCommits'), key: 'prCommitsEnabled', defaultValue: true },
   { el: document.getElementById('repoCleanup'), key: 'repoCleanupEnabled', defaultValue: false },
   { el: document.getElementById('prDashboard'), key: 'prDashboardEnabled', defaultValue: true },
 ];
