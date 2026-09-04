@@ -17,14 +17,14 @@ const FEATURES = [
     defaultValue: true,
     attr: 'ghuxMinimap',
   },
-  // Quick approve lives on the PR conversation page (Reviewers sidebar),
-  // not on diff pages.
+  // Quick approve lives on the PR conversation page (Reviewers sidebar)
+  // and next to the Submit review control on the PR diff pages.
   {
     id: 'quick-approve',
     storageKey: 'quickApproveEnabled',
     defaultValue: true,
     attr: 'ghuxApprove',
-    page: 'pr',
+    pages: ['pr', 'diff'],
   },
   // Repo cleanup lives on the repositories tab of your own profile.
   {
@@ -98,15 +98,10 @@ function refresh() {
   } else {
     delete root.dataset.ghuxPage;
   }
+  const pageFlags = { diff, pr, repos, pulls };
   for (const feature of FEATURES) {
-    const onPage =
-      feature.page === 'pr'
-        ? pr
-        : feature.page === 'repos'
-        ? repos
-        : feature.page === 'pulls'
-        ? pulls
-        : diff;
+    const pages = feature.pages || [feature.page || 'diff'];
+    const onPage = pages.some((p) => pageFlags[p]);
     const value = state[feature.storageKey];
     if (!onPage || value === undefined) {
       delete root.dataset[feature.attr];

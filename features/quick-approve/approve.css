@@ -3,6 +3,12 @@
   position: relative;
 }
 
+.ghux-review-split.ghux-review-inline {
+  display: inline-flex;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
 .ghux-review-split .ghux-review-main {
   flex: 1;
   border-top-right-radius: 0;

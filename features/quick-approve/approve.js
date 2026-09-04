@@ -1,11 +1,14 @@
 // Adds a split "Approve" button (Azure DevOps style) to the Reviewers
-// sidebar section on PR pages. Every action is one-click: it fills GitHub's
-// own review form (with an optional fixed comment) and submits it.
-// Falls back to the files tab when no review form is on the page
+// sidebar section on PR conversation pages, and next to the inline
+// "Submit review" control on the PR diff pages (/files, /changes).
+// Every action is one-click: it fills GitHub's own review form
+// (with an optional fixed comment) and submits it.
+// Falls back to the PR diff tab when no review form is on the page
 // (#ghux-review-<actionId>).
 (() => {
   const WRAP_ATTR = 'data-ghux-approve-btn';
   const REVIEW_DIALOG = '#review-changes-modal';
+  const SUBMIT_LABELS = /submit review|review changes/i;
 
   const EVENTS = {
     approve: /approve/i,
@@ -52,7 +55,8 @@
 
   function isActive() {
     const root = document.documentElement;
-    return root.dataset.ghuxPage === 'pr' && root.dataset.ghuxApprove === 'on';
+    const page = root.dataset.ghuxPage;
+    return (page === 'pr' || page === 'diff') && root.dataset.ghuxApprove === 'on';
   }
 
   function findReviewersSection() {
@@ -91,7 +95,7 @@
     const classic = document.querySelector(REVIEW_DIALOG);
     if (classic?.open) return true;
     return [...document.querySelectorAll('[role="dialog"], dialog[open]')].some(
-      (d) => /submit review/i.test(d.textContent)
+      (d) => SUBMIT_LABELS.test(d.textContent)
     );
   }
 
@@ -113,7 +117,7 @@
       const label = `${(b.textContent || '').trim()} ${
         b.getAttribute('aria-label') || ''
       }`;
-      return /review changes/i.test(label);
+      return SUBMIT_LABELS.test(label);
     });
     if (btn) {
       btn.click();
@@ -158,7 +162,8 @@
   function navigateToFiles(action) {
     const match = location.pathname.match(/^(\/[^/]+\/[^/]+\/pull\/\d+)/i);
     if (!match) return false;
-    location.assign(`${match[1]}/files#ghux-review-${action.id}`);
+    const tab = /\/changes\/?$/i.test(location.pathname) ? 'changes' : 'files';
+    location.assign(`${match[1]}/${tab}#ghux-review-${action.id}`);
     return true;
   }
 
@@ -300,10 +305,12 @@
     return li;
   }
 
-  function buildWidget() {
+  function buildWidget({ inline = false } = {}) {
     const wrap = document.createElement('div');
     wrap.setAttribute(WRAP_ATTR, '');
-    wrap.className = 'ghux-review-split mt-2';
+    wrap.className = inline
+      ? 'ghux-review-split ghux-review-inline'
+      : 'ghux-review-split mt-2';
 
     const mainBtn = document.createElement('button');
     mainBtn.type = 'button';
@@ -331,12 +338,40 @@
     return wrap;
   }
 
+  function findDiffSubmitReviewAnchor() {
+    const candidates = [...document.querySelectorAll('button, summary')].filter(
+      (b) => {
+        if (!(b instanceof HTMLElement)) return false;
+        if (b.closest(`[${WRAP_ATTR}]`)) return false;
+        if (b.closest('form')) return false;
+        if (b.closest('dialog, [role="dialog"]')) return false;
+        const rect = b.getBoundingClientRect();
+        if (rect.width === 0 || rect.height === 0) return false;
+        const label = `${(b.textContent || '').trim()} ${
+          b.getAttribute('aria-label') || ''
+        }`;
+        return SUBMIT_LABELS.test(label);
+      }
+    );
+    return candidates[0] || null;
+  }
+
   function render() {
     document.querySelectorAll(`[${WRAP_ATTR}]`).forEach((n) => n.remove());
     if (!isActive()) return;
-    const section = findReviewersSection();
-    if (!section) return;
-    section.append(buildWidget());
+    const isDiff = document.documentElement.dataset.ghuxPage === 'diff';
+    const anchor = isDiff
+      ? findDiffSubmitReviewAnchor()
+      : findReviewersSection();
+    if (!anchor) return;
+    const widget = buildWidget({ inline: isDiff });
+    if (isDiff) {
+      const parent = anchor.parentElement;
+      if (!parent) return;
+      parent.insertBefore(widget, anchor);
+    } else {
+      anchor.append(widget);
+    }
   }
 
   let scheduled = false;
