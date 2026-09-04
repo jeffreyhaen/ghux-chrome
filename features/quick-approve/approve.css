@@ -3,6 +3,10 @@
   position: relative;
 }
 
+html[data-ghux-page="diff"] [data-ghux-hide-submit] {
+  display: none !important;
+}
+
 .ghux-review-split.ghux-review-inline {
   display: inline-flex;
   margin-right: 8px;
@@ -55,6 +59,10 @@
 
 .ghux-review-split .ghux-fg-danger {
   color: var(--fgColor-danger, #d1242f);
+}
+
+.ghux-review-split .ghux-fg-muted {
+  color: var(--fgColor-muted, #9198a1);
 }
 
 .ghux-review-split .octicon {

@@ -16,7 +16,7 @@ Chrome extension that improves the GitHub code review experience similar to Azur
 
 **Pull request pages**:
 
-- **Quick review actions** — Azure DevOps style Approve split button in the Reviewers sidebar on the conversation page, and next to the native Submit review control on the Files changed / Files / Changes page: approve, approve with a fixed comment, or request changes in one click (on by default)
+- **Quick review actions** — Azure DevOps style Approve split button in the Reviewers sidebar on the conversation page, and replacing the native Submit review control on the Files changed / Files / Changes page: approve, approve with a fixed comment, wait for author, or open the full review dialog — one click on diff always submits through GitHub's own form so any pending inline comments are submitted together with the review (on by default)
 - **Commit grouping** — consecutive push blocks in the conversation timeline collapse into one summary row (“pushed 36 commits · 5 days ago → 2 days ago”), keeping the 3 most recent commits visible; click the row to expand the original list again (on by default)
 
 **Profile repositories tab** (`/<you>?tab=repositories`):
@@ -44,10 +44,11 @@ Some features can use the GitHub REST API instead of automating the GitHub
 interface, which makes them faster and more reliable. These features work
 without a token, but fall back to UI automation.
 
-Currently used by: **quick review actions** (optional), **repo cleanup**
-(required — a repository can only be deleted through the API) and **PR
-dashboard** (required — reviewer statuses and resolved comment counts come
-from the GraphQL API).
+Currently used by: **quick review actions** on the PR conversation page only
+(optional — on diff pages reviews always go through GitHub's form so pending
+inline comments are submitted with them), **repo cleanup** (required — a
+repository can only be deleted through the API) and **PR dashboard** (required
+— reviewer statuses and resolved comment counts come from the GraphQL API).
 
 Configure it once in the extension popup — all API-based features share the
 same token. The token is stored locally (`storage.local`), never synced.
