@@ -11,23 +11,23 @@ Chrome extension that improves the GitHub code review experience similar to Azur
 **Diff pages** (pull requests, commits, compare):
 
 - **Word wrap** — toggle word wrapping in diffs (off by default)
-- **Split view enhancements** — draggable divider, synchronized scrolling, and scrollbar bars that stay pinned to the viewport bottom while scrolling long files (on by default)
-- **Diff minimap** — marker strip per file showing where additions/deletions are after using "Expand all lines"; click a marker to jump to it (on by default)
+- **Split view enhancements** — draggable divider, synchronized scrolling when word wrap is off, and scrollbar bars that stay pinned to the viewport bottom while scrolling long files (on by default)
+- **Diff minimap** — marker strip for long, fully expanded files that contain both context and additions/deletions; click a marker to jump to it (on by default)
 
 **Pull request pages**:
 
 - **Quick review actions** — Azure DevOps style Approve split button in the Reviewers sidebar on the conversation page, and replacing the native Submit review control on the Files changed / Files / Changes page: approve, approve with a fixed comment, wait for author, or open the full review dialog — one click on diff always submits through GitHub's own form so any pending inline comments are submitted together with the review (on by default)
-- **Commit grouping** — consecutive push blocks in the conversation timeline collapse into one summary row (“pushed 36 commits · 5 days ago → 2 days ago”), keeping the 3 most recent commits visible; click the row to expand the original list again (on by default)
+- **Commit grouping** — consecutive push blocks of more than five commits in the conversation timeline collapse into one summary row (“pushed 36 commits · 5 days ago → 2 days ago”), keeping the 3 most recent commits visible; click the row to expand the original list again (on by default)
 
 **Profile repositories tab** (`/<you>?tab=repositories`):
 
-- **Repo cleanup** — delete button (trash icon) next to the Star dropdown on each of your own repositories; asks you to type the repo name to confirm and deletes via the GitHub API (off by default, requires a token)
+- **Repo cleanup** — delete button (trash icon) next to the Star dropdown on each of your own repositories; asks you to type the full `owner/repo` name to confirm and deletes via the GitHub API (off by default, requires a token)
 
 **Pull request list** (`/<owner>/<repo>/pulls`):
 
-- **PR dashboard** — replaces the native pull request list with an Azure DevOps board style table: Open/Draft state badges, checks status, creator avatars, open/resolved comment chips, reviewer avatars with status rings, branch flow (head → base), plus its own filter/search/sort toolbar and a ⇄ toggle back to the native list (on by default, requires a token)
+- **PR dashboard** — replaces the native pull request list with an Azure DevOps board style table: Open/Draft/Merged/Closed state badges, checks status, creator avatars, open/resolved comment chips, reviewer avatars with status rings, branch flow (head → base), plus its own filter/search/sort toolbar and a ⇄ toggle back to the native list (on by default, requires a token)
 
-All features can be toggled from the extension popup or GitHub's diff settings menu.
+All features can be toggled from the extension popup. On diff pages, word wrap, split view enhancements, and the diff minimap can also be toggled from GitHub's diff settings menu.
 
 ## Install
 
@@ -40,15 +40,16 @@ Open a GitHub page and use the GHUX icon to configure the features.
 
 ## GitHub API token (optional)
 
-Some features can use the GitHub REST API instead of automating the GitHub
-interface, which makes them faster and more reliable. These features work
-without a token, but fall back to UI automation.
+Some features use the GitHub API instead of automating the GitHub interface,
+which makes them faster and more reliable. A token is optional for **quick
+review actions** on the PR conversation page; without one, they fall back to
+UI automation. On diff pages, reviews always go through GitHub's form so
+pending inline comments are submitted with them.
 
-Currently used by: **quick review actions** on the PR conversation page only
-(optional — on diff pages reviews always go through GitHub's form so pending
-inline comments are submitted with them), **repo cleanup** (required — a
-repository can only be deleted through the API) and **PR dashboard** (required
-— reviewer statuses and resolved comment counts come from the GraphQL API).
+A token is required for **repo cleanup** (a repository can only be deleted
+through the API) and **PR dashboard** (reviewer statuses and resolved comment
+counts come from the GraphQL API). Without a token, repo cleanup is disabled
+and the dashboard leaves GitHub's native pull request list in place.
 
 Configure it once in the extension popup — all API-based features share the
 same token. The token is stored locally (`storage.local`), never synced.
@@ -56,7 +57,7 @@ same token. The token is stored locally (`storage.local`), never synced.
 Which token to create:
 
 - **Fine-grained token** with *Pull requests: read/write* (reviews) and
-  *Administration: read/write* (repository delete) — scoped to a single
+  *Administration: write* (repository delete) — scoped to a single
   organization or set of repositories
 - **Classic token** with the `repo` scope (reviews) and `delete_repo` scope
   (repository delete) — works across all organizations and repositories you
