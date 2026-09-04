@@ -1,12 +1,16 @@
-// Adds a split "Approve" button (Azure DevOps style) to the Reviewers
-// sidebar section on PR conversation pages, and next to the inline
+// Adds an "Approve" split button (Azure DevOps style) to the Reviewers
+// sidebar section on PR conversation pages, and replaces the native
 // "Submit review" control on the PR diff pages (/files, /changes).
-// Every action is one-click: it fills GitHub's own review form
-// (with an optional fixed comment) and submits it.
-// Falls back to the PR diff tab when no review form is on the page
-// (#ghux-review-<actionId>).
+// On the conversation page, actions submit through the form or the
+// GitHub API when a token is configured.
+// On diff pages the native control stays in the DOM but is hidden
+// behind the GHUX button, and every action runs through GitHub's own
+// review form so pending inline comments are submitted together with
+// the review. Falls back to the PR diff tab when no review form is on
+// the page (#ghux-review-<actionId>).
 (() => {
   const WRAP_ATTR = 'data-ghux-approve-btn';
+  const HIDE_ATTR = 'data-ghux-hide-submit';
   const REVIEW_DIALOG = '#review-changes-modal';
   const SUBMIT_LABELS = /submit review|review changes/i;
 
@@ -53,10 +57,25 @@
     },
   ];
 
+  const DIFF_EXTRA_ACTIONS = [
+    {
+      id: 'open-review-dialog',
+      label: 'Open review dialog\u2026',
+      icon: 'comment',
+      color: 'muted',
+      dividerBefore: true,
+      openDialogOnly: true,
+    },
+  ];
+
   function isActive() {
     const root = document.documentElement;
     const page = root.dataset.ghuxPage;
     return (page === 'pr' || page === 'diff') && root.dataset.ghuxApprove === 'on';
+  }
+
+  function isDiff() {
+    return document.documentElement.dataset.ghuxPage === 'diff';
   }
 
   function findReviewersSection() {
@@ -99,10 +118,10 @@
     );
   }
 
-  function openReviewDialog() {
+  function openReviewDialog({ force = false } = {}) {
     // Never click the toggle when the dialog is already (opening) — a second
     // click would close it again.
-    if (isReviewDialogOpen() || reviewForms().length) return true;
+    if (isReviewDialogOpen() || (!force && reviewForms().length)) return true;
 
     const classic = document.querySelector(REVIEW_DIALOG);
     if (classic) {
@@ -254,6 +273,7 @@
 
   function runAction(action, mainBtn) {
     markDone(mainBtn);
+    if (isDiff()) return runDomAction(action, mainBtn);
     chrome.storage.local.get({ githubToken: '' }, (cfg) => {
       if (!cfg.githubToken) return runDomAction(action, mainBtn);
       submitViaApi(action, cfg.githubToken).then((result) => {
@@ -299,6 +319,7 @@
     btn.addEventListener('click', () => {
       const details = btn.closest('details');
       if (details) details.removeAttribute('open');
+      if (action.openDialogOnly) return openReviewDialog({ force: true });
       runAction(action, mainBtn);
     });
     li.appendChild(btn);
@@ -329,7 +350,8 @@
 
     const menu = document.createElement('ul');
     menu.className = 'dropdown-menu dropdown-menu-sw';
-    for (const action of ACTIONS) {
+    const menuActions = inline ? [...ACTIONS, ...DIFF_EXTRA_ACTIONS] : ACTIONS;
+    for (const action of menuActions) {
       menu.appendChild(buildMenuItem(action, mainBtn));
     }
     details.appendChild(menu);
@@ -356,21 +378,47 @@
     return candidates[0] || null;
   }
 
+  function restoreHiddenAnchors() {
+    document.querySelectorAll(`[${HIDE_ATTR}]`).forEach((n) =>
+      n.removeAttribute(HIDE_ATTR)
+    );
+  }
+
+  function nativeReviewTarget(anchor) {
+    const group = anchor.closest('.ButtonGroup, .btn-group');
+    if (group) return group;
+    const parent = anchor.parentElement;
+    if (
+      !parent ||
+      parent === document.body ||
+      parent.children.length < 2 ||
+      parent.children.length > 3
+    ) {
+      return anchor;
+    }
+    const controls = [...parent.children].every((child) =>
+      /^(BUTTON|DETAILS|SUMMARY)$/.test(child.tagName)
+    );
+    return controls ? parent : anchor;
+  }
+
   function render() {
+    restoreHiddenAnchors();
     document.querySelectorAll(`[${WRAP_ATTR}]`).forEach((n) => n.remove());
     if (!isActive()) return;
-    const isDiff = document.documentElement.dataset.ghuxPage === 'diff';
-    const anchor = isDiff
+    const onDiff = isDiff();
+    const anchor = onDiff
       ? findDiffSubmitReviewAnchor()
       : findReviewersSection();
     if (!anchor) return;
-    const widget = buildWidget({ inline: isDiff });
-    if (isDiff) {
-      const parent = anchor.parentElement;
+    if (onDiff) {
+      const target = nativeReviewTarget(anchor);
+      const parent = target.parentElement;
       if (!parent) return;
-      parent.insertBefore(widget, anchor);
+      target.setAttribute(HIDE_ATTR, '');
+      parent.insertBefore(buildWidget({ inline: true }), target);
     } else {
-      anchor.append(widget);
+      anchor.append(buildWidget());
     }
   }
 
