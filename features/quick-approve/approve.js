@@ -1,13 +1,11 @@
 // Adds an "Approve" split button (Azure DevOps style) to the Reviewers
 // sidebar section on PR conversation pages, and replaces the native
 // "Submit review" control on the PR diff pages (/files, /changes).
-// On the conversation page, actions submit through the form or the
-// GitHub API when a token is configured.
-// On diff pages the native control stays in the DOM but is hidden
-// behind the GHUX button, and every action runs through GitHub's own
-// review form so pending inline comments are submitted together with
-// the review. Falls back to the PR diff tab when no review form is on
-// the page (#ghux-review-<actionId>).
+// On both page types, quick actions submit through the form or the GitHub
+// API when a token is configured. On diff pages the native control stays in
+// the DOM but is hidden behind the GHUX button. The explicit dialog action
+// remains available as a separate menu item. Falls back to the PR diff tab
+// when no review form is on the page (#ghux-review-<actionId>).
 (() => {
   const WRAP_ATTR = 'data-ghux-approve-btn';
   const HIDE_ATTR = 'data-ghux-hide-submit';
@@ -273,7 +271,6 @@
 
   function runAction(action, mainBtn) {
     markDone(mainBtn);
-    if (isDiff()) return runDomAction(action, mainBtn);
     chrome.storage.local.get({ githubToken: '' }, (cfg) => {
       if (!cfg.githubToken) return runDomAction(action, mainBtn);
       submitViaApi(action, cfg.githubToken).then((result) => {

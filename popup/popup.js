@@ -26,9 +26,9 @@ const tokenStatus = document.getElementById('tokenStatus');
 chrome.storage.local.get({ githubToken: '' }, (result) => {
   if (result.githubToken) {
     tokenInput.value = result.githubToken;
-    tokenStatus.textContent = 'Token saved — conversation reviews use the GitHub API.';
+    tokenStatus.textContent = 'Token saved — quick review actions use the GitHub API.';
   } else {
-    tokenStatus.textContent = 'No token — review actions use form automation.';
+    tokenStatus.textContent = 'No token — quick review actions use form automation.';
   }
 });
 
@@ -36,7 +36,7 @@ document.getElementById('saveToken').addEventListener('click', () => {
   const token = tokenInput.value.trim();
   chrome.storage.local.set({ githubToken: token }, () => {
     tokenStatus.textContent = token
-      ? 'Token saved — conversation reviews use the GitHub API.'
-      : 'Token cleared — review actions use form automation.';
+      ? 'Token saved — quick review actions use the GitHub API.'
+      : 'Token cleared — quick review actions use form automation.';
   });
 });

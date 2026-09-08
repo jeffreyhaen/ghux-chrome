@@ -16,7 +16,7 @@ Chrome extension that improves the GitHub code review experience similar to Azur
 
 **Pull request pages**:
 
-- **Quick review actions** — Azure DevOps style Approve split button in the Reviewers sidebar on the conversation page, and replacing the native Submit review control on the Files changed / Files / Changes page: approve, approve with a fixed comment, wait for author, or open the full review dialog — one click on diff always submits through GitHub's own form so any pending inline comments are submitted together with the review (on by default)
+- **Quick review actions** — Azure DevOps style Approve split button in the Reviewers sidebar on the conversation page, and replacing the native Submit review control on the Files changed / Files / Changes page: approve, approve with a fixed comment, wait for author, or open the full review dialog; quick actions use the same API-or-form submission flow on both page types (on by default)
 - **Commit grouping** — consecutive push blocks of more than five commits in the conversation timeline collapse into one summary row (“pushed 36 commits · 5 days ago → 2 days ago”), keeping the 3 most recent commits visible; click the row to expand the original list again (on by default)
 
 **Profile repositories tab** (`/<you>?tab=repositories`):
@@ -42,9 +42,8 @@ Open a GitHub page and use the GHUX icon to configure the features.
 
 Some features use the GitHub API instead of automating the GitHub interface,
 which makes them faster and more reliable. A token is optional for **quick
-review actions** on the PR conversation page; without one, they fall back to
-UI automation. On diff pages, reviews always go through GitHub's form so
-pending inline comments are submitted with them.
+review actions** on PR pages; without one, they fall back to UI
+automation on both the conversation and diff pages.
 
 A token is required for **repo cleanup** (a repository can only be deleted
 through the API) and **PR dashboard** (reviewer statuses and resolved comment
