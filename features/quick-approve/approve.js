@@ -119,7 +119,12 @@
   function openReviewDialog({ force = false } = {}) {
     // Never click the toggle when the dialog is already (opening) — a second
     // click would close it again.
-    if (isReviewDialogOpen() || (!force && reviewForms().length)) return true;
+    if (
+      isReviewDialogOpen() ||
+      (!force && (formFor('approve') || formFor('reject')))
+    ) {
+      return true;
+    }
 
     const classic = document.querySelector(REVIEW_DIALOG);
     if (classic) {
@@ -191,36 +196,117 @@
     return m ? { owner: m[1], repo: m[2], number: m[3] } : null;
   }
 
+  function apiHeaders(token, extra) {
+    return {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+      ...(extra || {}),
+    };
+  }
+
+  function apiErrorMessage(pr, res, data) {
+    const detail =
+      (data.errors && data.errors[0] && data.errors[0].message) ||
+      data.message ||
+      'unknown error';
+    return `${res.status} — ${detail} (${pr.owner}/${pr.repo}#${pr.number})`;
+  }
+
+  function hasPendingReviewError(res, data) {
+    const detail = [
+      data.message,
+      ...(Array.isArray(data.errors)
+        ? data.errors.map((error) => error && error.message)
+        : []),
+    ]
+      .filter(Boolean)
+      .join(' ');
+    return res.status === 422 && /pending review/i.test(detail);
+  }
+
+  async function fetchAuthenticatedLogin(token) {
+    const res = await fetch('https://api.github.com/user', {
+      headers: apiHeaders(token),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      const detail = data.message || 'unknown error';
+      throw new Error(`${res.status} — ${detail}`);
+    }
+    const data = await res.json();
+    return data.login;
+  }
+
+  async function findMyPendingReviewId(pr, token, login) {
+    for (let page = 1; page <= 5; page++) {
+      const res = await fetch(
+        `https://api.github.com/repos/${pr.owner}/${pr.repo}/pulls/${pr.number}/reviews?per_page=100&page=${page}`,
+        { headers: apiHeaders(token) }
+      );
+      if (!res.ok) return null;
+      const list = await res.json().catch(() => []);
+      if (!Array.isArray(list) || list.length === 0) return null;
+      for (const r of list) {
+        if (r && r.state === 'PENDING' && r.user && r.user.login === login) {
+          return r.id;
+        }
+      }
+      if (list.length < 100) return null;
+    }
+    return null;
+  }
+
+  async function createReview(pr, action, token) {
+    const res = await fetch(
+      `https://api.github.com/repos/${pr.owner}/${pr.repo}/pulls/${pr.number}/reviews`,
+      {
+        method: 'POST',
+        headers: apiHeaders(token, { 'Content-Type': 'application/json' }),
+        body: JSON.stringify({
+          event: API_EVENTS[action.event],
+          ...(action.body ? { body: action.body } : {}),
+        }),
+      }
+    );
+    if (res.ok) return { ok: true };
+    const data = await res.json().catch(() => ({}));
+    return {
+      ok: false,
+      fallbackToDom: hasPendingReviewError(res, data),
+      message: apiErrorMessage(pr, res, data),
+    };
+  }
+
+  async function submitPendingReview(pr, reviewId, action, token) {
+    const res = await fetch(
+      `https://api.github.com/repos/${pr.owner}/${pr.repo}/pulls/${pr.number}/reviews/${reviewId}/events`,
+      {
+        method: 'POST',
+        headers: apiHeaders(token, { 'Content-Type': 'application/json' }),
+        body: JSON.stringify({
+          event: API_EVENTS[action.event],
+          ...(action.body ? { body: action.body } : {}),
+        }),
+      }
+    );
+    if (res.ok) return { ok: true };
+    const data = await res.json().catch(() => ({}));
+    return {
+      ok: false,
+      fallbackToDom: res.status === 404 || res.status === 422,
+      message: apiErrorMessage(pr, res, data),
+    };
+  }
+
   async function submitViaApi(action, token) {
     const pr = parsePrRef();
     if (!pr) return { ok: false, message: 'not a pull request page' };
     try {
-      const res = await fetch(
-        `https://api.github.com/repos/${pr.owner}/${pr.repo}/pulls/${pr.number}/reviews`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: 'application/vnd.github+json',
-            'X-GitHub-Api-Version': '2022-11-28',
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            event: API_EVENTS[action.event],
-            ...(action.body ? { body: action.body } : {}),
-          }),
-        }
-      );
-      if (res.ok) return { ok: true };
-      const data = await res.json().catch(() => ({}));
-      const detail =
-        (data.errors && data.errors[0] && data.errors[0].message) ||
-        data.message ||
-        'unknown error';
-      return {
-        ok: false,
-        message: `${res.status} — ${detail} (${pr.owner}/${pr.repo}#${pr.number})`,
-      };
+      const login = await fetchAuthenticatedLogin(token);
+      const pendingId = await findMyPendingReviewId(pr, token, login);
+      if (pendingId) return submitPendingReview(pr, pendingId, action, token);
+      return createReview(pr, action, token);
     } catch (err) {
       return { ok: false, message: String(err) };
     }
@@ -275,6 +361,7 @@
       if (!cfg.githubToken) return runDomAction(action, mainBtn);
       submitViaApi(action, cfg.githubToken).then((result) => {
         if (result.ok) return location.reload();
+        if (result.fallbackToDom) return runDomAction(action, mainBtn);
         markFailed(mainBtn, 'Failed');
         notify(`GHUX: review failed — ${result.message}`);
       });

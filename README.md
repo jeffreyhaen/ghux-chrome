@@ -16,7 +16,7 @@ Chrome extension that improves the GitHub code review experience similar to Azur
 
 **Pull request pages**:
 
-- **Quick review actions** — Azure DevOps style Approve split button in the Reviewers sidebar on the conversation page, and replacing the native Submit review control on the Files changed / Files / Changes page: approve, approve with a fixed comment, wait for author, or open the full review dialog; quick actions use the same API-or-form submission flow on both page types (on by default)
+- **Quick review actions** — Azure DevOps style Approve split button in the Reviewers sidebar on the conversation page, and replacing the native Submit review control on the Files changed / Files / Changes page: approve, approve with a fixed comment, wait for author, or open the full review dialog; quick actions use the same API-or-form submission flow on both page types, and on the API path a pending review by the authenticated user (with its inline comments) is submitted instead of starting a new review (on by default)
 - **Commit grouping** — consecutive push blocks of more than five commits in the conversation timeline collapse into one summary row (“pushed 36 commits · 5 days ago → 2 days ago”), keeping the 3 most recent commits visible; click the row to expand the original list again (on by default)
 
 **Profile repositories tab** (`/<you>?tab=repositories`):
