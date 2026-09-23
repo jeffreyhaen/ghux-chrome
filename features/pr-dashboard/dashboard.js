@@ -390,11 +390,29 @@
   }
 
   function findNativeBlocks() {
-    const list =
+    const legacyList =
       document.querySelector('.js-navigation-container') ||
       document.querySelector('[id^="issue_"]');
+    if (legacyList) {
+      const blocks = [legacyList.closest('.Box') || legacyList];
+      const pagination = document.querySelector('.paginate-container');
+      if (pagination) blocks.push(pagination);
+      return blocks;
+    }
+
+    const repo = repoFromPath();
+    if (!repo) return [];
+    const prefix = `/${repo.owner}/${repo.repo}/pull/`.toLowerCase();
+    const prLink = [...document.querySelectorAll('a[data-testid="listitem-title-link"][href]')].find(
+      (link) => {
+        const path = link.pathname.toLowerCase();
+        return path.startsWith(prefix) && /\/pull\/\d+\/?$/i.test(path);
+      }
+    );
+    const list = prLink?.closest('ul[role="list"]');
     if (!list) return [];
-    const blocks = [list.closest('.Box') || list];
+
+    const blocks = [list.closest('div[id$="-list-view-container"]') || list];
     const pagination = document.querySelector('.paginate-container');
     if (pagination) blocks.push(pagination);
     return blocks;
