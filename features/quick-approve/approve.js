@@ -92,20 +92,42 @@
     return null;
   }
 
-  // A review form is any form posting to the PR's /reviews endpoint. This
-  // works in both the classic and the new React PR experience.
+  // A review form is any form posting to the PR's /reviews endpoint, or any form
+  // inside a review dialog.
   function reviewForms() {
     return [...document.querySelectorAll('form')].filter((f) =>
-      /\/reviews(?:\?|$)/.test(f.action || '')
+      /\/reviews(?:\?|$)/.test(f.action || '') ||
+      Boolean(f.closest(REVIEW_DIALOG) || f.closest('[role="dialog"], dialog'))
+    );
+  }
+
+  function findDialogOrScope() {
+    return (
+      document.querySelector(REVIEW_DIALOG) ||
+      [...document.querySelectorAll('[role="dialog"], dialog')].find((d) =>
+        SUBMIT_LABELS.test(d.textContent)
+      ) ||
+      document
     );
   }
 
   function formFor(eventKey) {
+    // Look first across known review forms
     for (const form of reviewForms()) {
       const radio = [...form.querySelectorAll('input[type="radio"]')].find(
-        (r) => EVENTS[eventKey].test(r.value) && !r.disabled
+        (r) => (EVENTS[eventKey].test(r.value) || EVENTS[eventKey].test(r.name) || EVENTS[eventKey].test(r.getAttribute('aria-label') || '') || EVENTS[eventKey].test(r.parentElement?.textContent || '')) && !r.disabled
       );
-      if (radio) return { radio, form };
+      if (radio) return { radio, form, container: form };
+    }
+    // New React UI dialog might not wrap radios in an HTML <form action=".../reviews">
+    const scope = findDialogOrScope();
+    const radio = [...scope.querySelectorAll('input[type="radio"]')].find((r) => {
+      if (r.disabled) return false;
+      const text = `${r.value} ${r.name} ${r.getAttribute('aria-label') || ''} ${r.parentElement?.textContent || ''}`;
+      return EVENTS[eventKey].test(text);
+    });
+    if (radio) {
+      return { radio, form: radio.closest('form'), container: scope };
     }
     return null;
   }
@@ -121,7 +143,7 @@
   function openReviewDialog({ force = false } = {}) {
     // Never click the toggle when the dialog is already (opening) — a second
     // click would close it again.
-    if (isReviewDialogOpen() || (!force && reviewForms().length)) return true;
+    if (isReviewDialogOpen()) return true;
 
     const classic = document.querySelector(REVIEW_DIALOG);
     if (classic) {
@@ -145,8 +167,8 @@
     return false;
   }
 
-  function fillBody(form, body) {
-    const textarea = form.querySelector('textarea');
+  function fillBody(container, body) {
+    const textarea = container.querySelector('textarea');
     if (!textarea) return;
     // Native setter, so React-controlled inputs pick the value up too.
     Object.getOwnPropertyDescriptor(
@@ -157,22 +179,30 @@
     textarea.dispatchEvent(new Event('change', { bubbles: true }));
   }
 
-  function submitButton(form) {
+  function submitButton(container) {
     return (
-      form.querySelector('button[type="submit"]') ||
-      form.querySelector('input[type="submit"]') ||
-      [...form.querySelectorAll('button')].find((b) =>
-        /submit review/i.test(b.textContent)
+      container.querySelector('button[type="submit"]') ||
+      container.querySelector('input[type="submit"]') ||
+      [...container.querySelectorAll('button')].find((b) =>
+        /submit review/i.test((b.textContent || '') + ' ' + (b.getAttribute('aria-label') || ''))
       )
     );
   }
 
   function submitReview(action) {
-    const found = formFor(action.event) || (openReviewDialog() && formFor(action.event));
+    if (!isReviewDialogOpen() && !formFor(action.event)) {
+      openReviewDialog();
+      return false; // wait for dialog to open and render in DOM
+    }
+    const found = formFor(action.event);
     if (!found) return false;
-    if (action.body) fillBody(found.form, action.body);
-    if (!found.radio.checked) found.radio.click();
-    const submit = submitButton(found.form);
+    const targetScope = found.container || found.form || document;
+    if (action.body) fillBody(targetScope, action.body);
+    if (!found.radio.checked) {
+      found.radio.click();
+      found.radio.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    const submit = submitButton(targetScope);
     if (!submit || submit.disabled) return false;
     submit.click();
     return true;
@@ -259,9 +289,15 @@
   }
 
   function runDomAction(action, mainBtn) {
-    const deadline = Date.now() + 4000;
+    const deadline = Date.now() + 5000;
     const attempt = () => {
-      if (submitReview(action)) return;
+      if (submitReview(action)) {
+        setTimeout(() => {
+          mainBtn.disabled = false;
+          mainBtn.innerHTML = `${octicon('check')} Approve`;
+        }, 3000);
+        return;
+      }
       if (Date.now() < deadline) return setTimeout(attempt, 300);
       if (!navigateToFiles(action)) {
         markFailed(mainBtn, 'Review form not found');
