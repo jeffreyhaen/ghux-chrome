@@ -18,11 +18,20 @@
 
   const isClassicTable = (t) => t.classList.contains('diff-table');
 
+  function isSplitTable(t) {
+    if (t.classList.contains('file-diff-split')) return true;
+    // Check if table has right-side-diff-cell in first tbody row or anywhere in first few rows
+    return Boolean(t.tBodies[0]?.querySelector('td.right-side-diff-cell'));
+  }
+
   function scan(root = document) {
     if (!splitOn()) return;
-    root
-      .querySelectorAll('table:has(> tbody > tr > td.right-side-diff-cell), table.diff-table.file-diff-split')
-      .forEach(enhance);
+    const candidates = root.querySelectorAll('table.diff-table.file-diff-split, table');
+    for (const table of candidates) {
+      if (isSplitTable(table)) {
+        enhance(table);
+      }
+    }
   }
 
   function enhance(table) {
@@ -30,6 +39,7 @@
     const wrapper = table.parentElement;
     if (!wrapper) return;
     table.setAttribute(DONE_ATTR, '1');
+    table.classList.add('ghux-split-table');
     wrapper.classList.add('ghux-diff-wrapper');
     setRatio(defaultRatio, wrapper);
     ensureColumns(table);
@@ -37,7 +47,6 @@
     addDivider(table, wrapper);
     const resizeObserver = new ResizeObserver(() => {
       layoutTable(table);
-      refreshSpacers(table);
     });
     table.__ghuxResizeObserver = resizeObserver;
     resizeObserver.observe(table);
@@ -175,29 +184,40 @@
     refreshSpacers(table);
   }
 
-  // Give every line of a side the same scroll range as the longest line
+  // Give lines of a side the same scroll range as the longest line
   // (via a --ghux-pad ::after spacer), so the side scrolls as one block.
   // maxExtra is a high-water mark: it never shrinks while scrolling, which
   // keeps the range stable while GitHub virtualizes rows in and out.
+  // Note: On huge files (e.g. > 1500 rows), iterating thousands of lines with
+  // scrollWidth/clientWidth triggers catastrophic forced reflow / layout thrashing.
+  // We sample lines on massive tables to determine the max range quickly without locking the browser.
   function refreshSpacers(table) {
     const wrapper = table.parentElement;
     if (!wrapper) return;
+    const MAX_FULL_MEASURE = 800;
     SIDES.forEach((side) => {
       const bar = sideBar(wrapper, side);
       if (!bar || !bar.clientWidth) return;
       const hwKey = side === 'left' ? 'ghuxHwL' : 'ghuxHwR';
       const items = [];
       let max = parseFloat(table.dataset[hwKey] || '0');
-      sideInners(table, side).forEach((i) => {
-        // blank inners (only a <br> or whitespace) get no spacer, see split.css
+      const inners = Array.from(sideInners(table, side));
+      if (!inners.length) return;
+
+      const stride = inners.length > MAX_FULL_MEASURE ? Math.ceil(inners.length / MAX_FULL_MEASURE) : 1;
+      for (let idx = 0; idx < inners.length; idx += stride) {
+        const i = inners[idx];
         i.classList.toggle('ghux-blank', i.textContent.trim() === '');
         const extra = i.scrollWidth - i.clientWidth - (i.__ghuxPad || 0);
         items.push([i, extra]);
         if (extra > max) max = extra;
-      });
+      }
+
       if (bar.scrollLeft > max) max = bar.scrollLeft;
       table.dataset[hwKey] = String(max);
       bar.firstElementChild.style.width = bar.clientWidth + Math.max(0, max) + 'px';
+
+      // Batch style writes
       items.forEach(([i, extra]) => {
         const pad = Math.max(0, Math.round(max - extra));
         if (pad !== (i.__ghuxPad || 0)) {
@@ -226,21 +246,16 @@
       const usable = rect.width - numW;
       const ratioAt = (clientX) => (clientX - rect.left - numW / 2) / usable;
 
-      let frame = 0;
+      let targetRatio = 0.5;
       const onMove = (ev) => {
-        setRatio(ratioAt(ev.clientX), wrapper);
-        if (frame) return;
-        frame = requestAnimationFrame(() => {
-          frame = 0;
-          if (table.isConnected) layoutTable(table);
-        });
+        targetRatio = ratioAt(ev.clientX);
+        setRatio(targetRatio, wrapper);
       };
       const onUp = (ev) => {
         handle.classList.remove('ghux-dragging');
         document.removeEventListener('mousemove', onMove);
         document.removeEventListener('mouseup', onUp);
-        if (frame) cancelAnimationFrame(frame);
-        const ratio = clamp(ratioAt(ev.clientX));
+        const ratio = clamp(targetRatio);
         setRatio(ratio, wrapper);
         defaultRatio = ratio;
         resetScrolls(wrapper);
@@ -320,6 +335,7 @@
       t.__ghuxResizeObserver?.disconnect();
       delete t.__ghuxResizeObserver;
       t.removeAttribute(DONE_ATTR);
+      t.classList.remove('ghux-split-table');
       delete t.dataset.ghuxNumW;
       delete t.dataset.ghuxHwL;
       delete t.dataset.ghuxHwR;
@@ -362,18 +378,17 @@
     if (!splitOn() || scanScheduled) return;
     let relevant = false;
     for (const m of mutations) {
-      // content changes inside an enhanced table (e.g. async syntax highlighting
-      // swapping spans) can make lines wider -> pads/ranges must be recomputed
-      const t = (m.target instanceof Element ? m.target : m.target.parentElement)
-        ?.closest?.(`table[${DONE_ATTR}]`);
-      if (t) dirtyTables.add(t);
-      if (
-        [...m.addedNodes].some(
-          (n) =>
-            n.nodeType === 1 &&
-            (n.tagName === 'TABLE' || n.tagName === 'TR' || n.querySelector?.('table'))
-        )
-      ) relevant = true;
+      // Only care about newly added elements, ignore characterData / style changes
+      for (const n of m.addedNodes) {
+        if (n.nodeType === 1) {
+          if (n.tagName === 'TABLE' || n.querySelector?.('table')) {
+            relevant = true;
+          } else if (n.tagName === 'TR') {
+            const t = n.closest?.(`table[${DONE_ATTR}]`);
+            if (t) dirtyTables.add(t);
+          }
+        }
+      }
     }
     if (!relevant && dirtyTables.size === 0) return;
     scanScheduled = true;
@@ -381,8 +396,10 @@
       scanScheduled = false;
       if (relevant) scan();
       layoutTables(pendingLayout);
-      layoutTables(dirtyTables);
-      dirtyTables.clear();
+      if (dirtyTables.size > 0) {
+        layoutTables(dirtyTables);
+        dirtyTables.clear();
+      }
     });
   });
   if (document.body) observeBody();
@@ -392,7 +409,6 @@
     bodyObserver.observe(document.body, {
       childList: true,
       subtree: true,
-      characterData: true,
     });
   }
 

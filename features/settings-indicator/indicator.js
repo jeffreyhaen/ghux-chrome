@@ -215,21 +215,21 @@
   };
 
   new MutationObserver((mutations) => {
-    for (const m of mutations) {
-      const nodes = [...m.addedNodes, ...m.removedNodes];
-      if (
-        nodes.length &&
-        nodes.every(
-          (n) =>
-            n.nodeType === 1 &&
-            (n.hasAttribute?.(GHUX_NODE) || n.querySelector?.(`[${GHUX_NODE}]`))
-        )
-      ) {
-        continue;
-      }
-      schedule();
-      return;
-    }
+    // Only schedule if an action menu / dropdown is actually open or being modified
+    const hasRelevantChange = mutations.some((m) => {
+      if (m.type === 'attributes') return true;
+      return [...m.addedNodes, ...m.removedNodes].some((n) => {
+        if (n.nodeType !== 1) return false;
+        if (n.hasAttribute?.(GHUX_NODE) || n.querySelector?.(`[${GHUX_NODE}]`)) return false;
+        return (
+          n.matches?.('ul[class*="ActionList"], details-menu, [role="menu"], [role="listbox"]') ||
+          n.querySelector?.('ul[class*="ActionList"], details-menu, [role="menu"]')
+        );
+      });
+    });
+
+    if (!hasRelevantChange) return;
+    schedule();
   }).observe(document.documentElement, {
     attributes: true,
     attributeFilter: ['data-ghux-page'],

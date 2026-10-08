@@ -11,15 +11,15 @@ html[data-ghux-page="diff"][data-ghux-split="on"] .ghux-diff-wrapper {
 }
 
 /* Split view + wrap off: keep both panes visible (fixed columns), scroll per line instead of the whole table */
-html[data-ghux-page="diff"][data-ghux-split="on"][data-ghux-wrap="off"] table:has(> tbody > tr > td.right-side-diff-cell) {
+html[data-ghux-page="diff"][data-ghux-split="on"][data-ghux-wrap="off"] table.ghux-split-table {
   table-layout: fixed !important;
 }
 
-html[data-ghux-page="diff"][data-ghux-split="on"][data-ghux-wrap="off"] div:has(> table > tbody > tr > td.right-side-diff-cell) {
+html[data-ghux-page="diff"][data-ghux-split="on"][data-ghux-wrap="off"] div.ghux-diff-wrapper {
   overflow-x: visible !important;
 }
 
-html[data-ghux-page="diff"][data-ghux-split="on"][data-ghux-wrap="off"] table:has(> tbody > tr > td.right-side-diff-cell) .diff-text-inner {
+html[data-ghux-page="diff"][data-ghux-split="on"][data-ghux-wrap="off"] table.ghux-split-table .diff-text-inner {
   overflow-x: auto !important;
   scrollbar-width: none !important;
 }
@@ -31,7 +31,7 @@ html[data-ghux-page="diff"][data-ghux-split="on"][data-ghux-wrap="off"] table.di
   table-layout: fixed !important;
 }
 
-html[data-ghux-page="diff"][data-ghux-split="on"][data-ghux-wrap="off"] div:has(> table.diff-table.file-diff-split) {
+html[data-ghux-page="diff"][data-ghux-split="on"][data-ghux-wrap="off"] div.ghux-diff-wrapper:has(> table.diff-table.file-diff-split) {
   overflow-x: visible !important;
 }
 

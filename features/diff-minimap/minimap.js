@@ -149,9 +149,15 @@
     e.strip.remove();
   }
 
+  const MAX_ROWS = 2500;
+
   function rebuild(e, rows) {
     for (const m of e.markers) m.node.remove();
     e.markers = [];
+    if (rows.length > MAX_ROWS) {
+      e.mixed = false;
+      return;
+    }
     const hasContext = rows.some((r) => classifyRow(r) === 'context');
     const changeRows = rows.filter((r) => {
       const k = classifyRow(r);

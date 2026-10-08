@@ -403,10 +403,19 @@
   }
 
   function render() {
+    if (!isActive()) {
+      restoreHiddenAnchors();
+      document.querySelectorAll(`[${WRAP_ATTR}]`).forEach((n) => n.remove());
+      return;
+    }
+    const onDiff = isDiff();
+    const existing = document.querySelector(`[${WRAP_ATTR}]`);
+    if (existing && existing.isConnected) {
+      // Already injected and valid
+      return;
+    }
     restoreHiddenAnchors();
     document.querySelectorAll(`[${WRAP_ATTR}]`).forEach((n) => n.remove());
-    if (!isActive()) return;
-    const onDiff = isDiff();
     const anchor = onDiff
       ? findDiffSubmitReviewAnchor()
       : findReviewersSection();
@@ -433,6 +442,9 @@
   };
 
   new MutationObserver((mutations) => {
+    // If the widget is already rendered on the page, do nothing!
+    if (document.querySelector(`[${WRAP_ATTR}]`)) return;
+
     for (const m of mutations) {
       const nodes = [...m.addedNodes, ...m.removedNodes];
       if (

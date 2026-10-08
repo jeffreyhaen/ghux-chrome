@@ -122,7 +122,9 @@
   }
 
   // Divider drags change side widths without firing scroll events.
+  // Throttled: only check during active divider drag, not every mouse movement on the page.
   window.addEventListener('mousemove', () => {
+    if (!document.querySelector('.ghux-divider.ghux-dragging')) return;
     for (const e of tracked) if (e.visible) syncGeometry(e, false);
   });
 

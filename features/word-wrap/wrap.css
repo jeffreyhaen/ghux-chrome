@@ -19,11 +19,11 @@ html[data-ghux-page="diff"][data-ghux-wrap="off"] .diff-text {
   word-break: normal !important;
 }
 
-html[data-ghux-page="diff"][data-ghux-wrap="off"] table:has(> tbody > tr.diff-line-row) {
+html[data-ghux-page="diff"][data-ghux-wrap="off"]:not([data-ghux-split="on"]) table:has(> tbody > tr.diff-line-row) {
   table-layout: auto !important;
 }
 
-html[data-ghux-page="diff"][data-ghux-wrap="off"] div:has(> table > tbody > tr.diff-line-row) {
+html[data-ghux-page="diff"][data-ghux-wrap="off"]:not([data-ghux-split="on"]) div:has(> table > tbody > tr.diff-line-row) {
   overflow-x: auto !important;
 }
 
